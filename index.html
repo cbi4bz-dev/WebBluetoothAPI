@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <title>Colorimeter Station Pro</title>
+  <title>Color Station Pro</title>
   <style>
     :root {
       --bg: #07090e;
@@ -142,7 +142,11 @@
       background: var(--success);
       box-shadow: 0 0 10px var(--success);
     }
-    .btn-off {
+    .top-actions {
+      display: flex;
+      gap: 8px;
+    }
+    .btn-action {
       background: rgba(255,255,255,0.06);
       border: 1px solid var(--card-border);
       color: var(--text-dim);
@@ -151,7 +155,9 @@
       font-size: 12px;
       font-weight: 600;
       cursor: pointer;
+      transition: background 0.2s;
     }
+    .btn-action:active { background: rgba(255,255,255,0.15); }
 
     /* ПЕРЕКЛЮЧАТЕЛЬ ПАЛИТР */
     .catalog-selector {
@@ -228,7 +234,7 @@
       flex-direction: column;
     }
     .main-code {
-      font-size: 44px;
+      font-size: 42px;
       font-weight: 900;
       letter-spacing: -0.04em;
       line-height: 1;
@@ -240,7 +246,7 @@
       opacity: 0.9;
     }
 
-    /* СЕТКА CMYK И ПАРАМЕТРОВ */
+    /* СЕТКА МОДЕЛЕЙ */
     .color-models-grid {
       display: grid;
       grid-template-columns: 1fr 1fr;
@@ -264,11 +270,10 @@
     }
     .model-val {
       font-family: ui-monospace, monospace;
-      font-size: 15px;
+      font-size: 14px;
       font-weight: 700;
       color: #fff;
     }
-    /* Визуализатор CMYK */
     .cmyk-bars {
       display: grid;
       grid-template-columns: repeat(4, 1fr);
@@ -294,6 +299,7 @@
       height: 100%;
       width: 0%;
       border-radius: 2px;
+      transition: width 0.3s ease;
     }
 
     /* АЛЬТЕРНАТИВЫ */
@@ -327,7 +333,7 @@
       flex-shrink: 0;
     }
     .alt-name {
-      font-size: 15px;
+      font-size: 14px;
       font-weight: 800;
       letter-spacing: -0.01em;
     }
@@ -346,7 +352,7 @@
   <!-- ЭКРАН 1: ПЕРЕКЛЮЧАТЕЛЬ -->
   <section id="connectScreen">
     <div class="hero-text">
-      <h1>Color Station</h1>
+      <h1>Color Station Pro</h1>
       <p>Спектроколориметрическая система</p>
     </div>
 
@@ -371,7 +377,10 @@
         <div class="pulse-dot"></div>
         <span>Онлайн</span>
       </div>
-      <button class="btn-off" onclick="disconnectDevice()">Выключить</button>
+      <div class="top-actions">
+        <button id="btnCopy" class="btn-action" onclick="copyReport()">Экспорт</button>
+        <button class="btn-action" onclick="disconnectDevice()">Выключить</button>
+      </div>
     </div>
 
     <!-- ВЫБОР ПАЛИТРЫ -->
@@ -437,7 +446,7 @@
 
     <!-- АЛЬТЕРНАТИВЫ -->
     <div class="alts-wrapper">
-      <div class="alts-title">Ближайшие артикулы выбранного каталога</div>
+      <div class="alts-title">Ближайшие артикулы каталога</div>
       <div class="alt-tile">
         <div id="alt1Swatch" class="alt-capsule"></div>
         <div style="flex:1;">
@@ -462,31 +471,225 @@
   let bleDevice = null;
   let currentCatalog = 'ral_classic';
   let lastMeasuredLab = null;
+  let lastReportData = null;
 
-  // КАТАЛОГИ ЦВЕТОВ (Код, Название, L, a, b)
+  // ПОЛНАЯ БАЗА RAL CLASSIC (213 цветов) + ДОП. КАТАЛОГИ
   const CATALOGS = {
     ral_classic: [
       {code:"RAL 1000", name:"Green beige", L:76.5, a:1.2, b:28.1},
+      {code:"RAL 1001", name:"Beige", L:75.8, a:5.7, b:26.2},
+      {code:"RAL 1002", name:"Sand yellow", L:73.2, a:7.4, b:39.6},
+      {code:"RAL 1003", name:"Signal yellow", L:73.5, a:17.2, b:71.5},
+      {code:"RAL 1004", name:"Golden yellow", L:69.2, a:17.8, b:66.3},
+      {code:"RAL 1005", name:"Honey yellow", L:63.8, a:14.2, b:59.1},
+      {code:"RAL 1006", name:"Maize yellow", L:67.4, a:18.5, b:65.2},
+      {code:"RAL 1007", name:"Daffodil yellow", L:67.1, a:22.4, b:66.8},
+      {code:"RAL 1011", name:"Brown beige", L:57.8, a:13.1, b:33.4},
+      {code:"RAL 1012", name:"Lemon yellow", L:73.8, a:4.2, b:60.8},
       {code:"RAL 1013", name:"Oyster white", L:86.8, a:0.4, b:10.8},
+      {code:"RAL 1014", name:"Ivory", L:80.4, a:3.7, b:24.1},
       {code:"RAL 1015", name:"Light ivory", L:84.4, a:2.8, b:16.9},
+      {code:"RAL 1016", name:"Sulfur yellow", L:89.2, a:-10.8, b:68.4},
+      {code:"RAL 1017", name:"Saffron yellow", L:75.4, a:21.2, b:53.2},
+      {code:"RAL 1018", name:"Zinc yellow", L:87.1, a:-4.7, b:75.3},
       {code:"RAL 1019", name:"Grey beige", L:64.2, a:3.8, b:15.4},
+      {code:"RAL 1020", name:"Olive yellow", L:60.8, a:1.2, b:25.6},
+      {code:"RAL 1021", name:"Colza yellow", L:76.5, a:14.3, b:76.9},
+      {code:"RAL 1023", name:"Traffic yellow", L:78.4, a:11.2, b:78.8},
+      {code:"RAL 1024", name:"Ochre yellow", L:61.7, a:9.6, b:40.8},
+      {code:"RAL 1026", name:"Luminous yellow", L:92.1, a:-22.4, b:88.2},
+      {code:"RAL 1027", name:"Curry", L:54.6, a:8.4, b:48.2},
+      {code:"RAL 1028", name:"Melon yellow", L:72.5, a:30.1, b:75.4},
+      {code:"RAL 1032", name:"Broom yellow", L:71.8, a:12.6, b:68.4},
+      {code:"RAL 1033", name:"Dahlia yellow", L:71.2, a:27.4, b:68.8},
+      {code:"RAL 1034", name:"Pastel yellow", L:71.5, a:23.5, b:48.4},
+      {code:"RAL 1035", name:"Pearl beige", L:56.4, a:2.2, b:10.8},
+      {code:"RAL 1036", name:"Pearl gold", L:45.8, a:4.8, b:22.1},
+      {code:"RAL 1037", name:"Sun yellow", L:68.4, a:26.8, b:71.2},
+      {code:"RAL 2000", name:"Yellow orange", L:57.8, a:38.6, b:57.5},
+      {code:"RAL 2001", name:"Red orange", L:44.2, a:45.2, b:42.1},
+      {code:"RAL 2002", name:"Vermilion", L:45.8, a:51.4, b:44.2},
+      {code:"RAL 2003", name:"Pastel orange", L:64.5, a:43.8, b:59.2},
+      {code:"RAL 2004", name:"Pure orange", L:56.1, a:54.4, b:59.8},
+      {code:"RAL 2005", name:"Luminous orange", L:58.4, a:72.1, b:62.1},
+      {code:"RAL 2007", name:"Luminous bright orange", L:71.2, a:46.1, b:74.2},
+      {code:"RAL 2008", name:"Bright red orange", L:57.4, a:47.8, b:56.4},
+      {code:"RAL 2009", name:"Traffic orange", L:52.1, a:52.4, b:54.1},
+      {code:"RAL 2010", name:"Signal orange", L:51.4, a:45.6, b:46.8},
+      {code:"RAL 2011", name:"Deep orange", L:58.9, a:42.1, b:58.7},
+      {code:"RAL 2012", name:"Salmon orange", L:54.8, a:39.4, b:34.2},
+      {code:"RAL 2013", name:"Pearl orange", L:37.2, a:36.4, b:29.8},
       {code:"RAL 3000", name:"Flame red", L:45.2, a:50.1, b:37.4},
+      {code:"RAL 3001", name:"Signal red", L:41.2, a:50.8, b:32.1},
+      {code:"RAL 3002", name:"Carmine red", L:39.8, a:48.6, b:31.2},
+      {code:"RAL 3003", name:"Ruby red", L:32.7, a:43.1, b:22.4},
+      {code:"RAL 3004", name:"Purple red", L:27.4, a:36.2, b:16.1},
+      {code:"RAL 3005", name:"Wine red", L:25.3, a:29.5, b:11.2},
+      {code:"RAL 3007", name:"Black red", L:21.2, a:18.4, b:5.6},
+      {code:"RAL 3009", name:"Oxide red", L:31.2, a:28.4, b:19.5},
+      {code:"RAL 3011", name:"Brown red", L:32.8, a:38.4, b:26.1},
+      {code:"RAL 3012", name:"Beige red", L:61.4, a:21.8, b:22.4},
+      {code:"RAL 3013", name:"Tomato red", L:38.4, a:42.1, b:27.4},
+      {code:"RAL 3014", name:"Antique pink", L:58.4, a:32.8, b:16.8},
       {code:"RAL 3015", name:"Light pink", L:69.8, a:24.1, b:11.8},
+      {code:"RAL 3016", name:"Coral red", L:44.2, a:41.8, b:31.2},
+      {code:"RAL 3017", name:"Rose", L:54.2, a:48.4, b:22.4},
+      {code:"RAL 3018", name:"Strawberry red", L:48.4, a:52.1, b:24.6},
       {code:"RAL 3020", name:"Traffic red", L:46.9, a:59.8, b:44.5},
+      {code:"RAL 3022", name:"Salmon pink", L:58.4, a:36.4, b:32.1},
+      {code:"RAL 3024", name:"Luminous red", L:52.1, a:78.4, b:54.2},
+      {code:"RAL 3026", name:"Luminous bright red", L:56.4, a:76.2, b:51.2},
+      {code:"RAL 3027", name:"Raspberry red", L:41.2, a:52.4, b:26.4},
       {code:"RAL 3028", name:"Pure red", L:45.8, a:62.4, b:43.1},
-      {code:"RAL 5002", name:"Ultramarine", L:24.1, a:13.5, b:-44.8},
+      {code:"RAL 3031", name:"Orient red", L:38.4, a:44.2, b:24.1},
+      {code:"RAL 3032", name:"Pearl ruby red", L:28.4, a:36.2, b:18.4},
+      {code:"RAL 3033", name:"Pearl pink", L:47.2, a:42.1, b:26.4},
+      {code:"RAL 4001", name:"Red lilac", L:48.2, a:21.4, b:-14.2},
+      {code:"RAL 4002", name:"Red violet", L:37.4, a:34.2, b:12.4},
+      {code:"RAL 4003", name:"Heather violet", L:54.8, a:45.6, b:-10.4},
+      {code:"RAL 4004", name:"Claret violet", L:27.8, a:34.2, b:4.8},
+      {code:"RAL 4005", name:"Blue lilac", L:48.7, a:18.5, b:-27.8},
+      {code:"RAL 4006", name:"Traffic purple", L:42.4, a:46.2, b:-18.7},
+      {code:"RAL 4007", name:"Purple violet", L:24.2, a:22.1, b:-6.4},
+      {code:"RAL 4008", name:"Signal violet", L:40.1, a:41.2, b:-19.4},
+      {code:"RAL 4009", name:"Pastel violet", L:61.2, a:12.4, b:1.8},
+      {code:"RAL 4010", name:"Telemagenta", L:49.3, a:55.6, b:-4.5},
+      {code:"RAL 4011", name:"Pearl violet", L:42.1, a:14.2, b:-12.4},
+      {code:"RAL 4012", name:"Pearl blackberry", L:45.8, a:0.8, b:-4.2},
+      {code:"RAL 5000", name:"Violet blue", L:35.4, a:-0.8, b:-22.4},
+      {code:"RAL 5001", name:"Green blue", L:31.2, a:-16.4, b:-21.2},
+      {code:"RAL 5002", name:"Ultramarine blue", L:24.1, a:13.5, b:-44.8},
       {code:"RAL 5003", name:"Sapphire blue", L:22.4, a:0.8, b:-24.1},
+      {code:"RAL 5004", name:"Black blue", L:14.2, a:0.4, b:-8.4},
+      {code:"RAL 5005", name:"Signal blue", L:33.2, a:-1.9, b:-37.2},
+      {code:"RAL 5007", name:"Brilliant blue", L:45.2, a:-10.8, b:-26.4},
+      {code:"RAL 5008", name:"Grey blue", L:27.4, a:-4.8, b:-10.4},
+      {code:"RAL 5009", name:"Azure blue", L:39.8, a:-14.2, b:-23.1},
+      {code:"RAL 5010", name:"Gentian blue", L:32.8, a:-4.1, b:-32.9},
+      {code:"RAL 5011", name:"Steel blue", L:20.4, a:0.2, b:-16.4},
+      {code:"RAL 5012", name:"Light blue", L:55.4, a:-14.2, b:-28.4},
+      {code:"RAL 5013", name:"Cobalt blue", L:20.8, a:3.4, b:-26.4},
+      {code:"RAL 5014", name:"Pigeon blue", L:52.4, a:-4.8, b:-16.4},
+      {code:"RAL 5015", name:"Sky blue", L:48.2, a:-13.5, b:-31.7},
+      {code:"RAL 5017", name:"Traffic blue", L:28.4, a:-7.4, b:-28.4},
+      {code:"RAL 5018", name:"Turquoise blue", L:54.2, a:-24.1, b:-12.4},
+      {code:"RAL 5019", name:"Capri blue", L:37.4, a:-12.4, b:-27.4},
+      {code:"RAL 5020", name:"Ocean blue", L:26.4, a:-16.4, b:-14.2},
+      {code:"RAL 5021", name:"Water blue", L:44.2, a:-28.4, b:-12.4},
+      {code:"RAL 5022", name:"Night blue", L:21.2, a:8.4, b:-31.2},
+      {code:"RAL 5023", name:"Distant blue", L:44.8, a:-4.8, b:-24.1},
+      {code:"RAL 5024", name:"Pastel blue", L:58.4, a:-12.4, b:-18.4},
+      {code:"RAL 5025", name:"Pearl gentian blue", L:41.2, a:-18.4, b:-16.4},
+      {code:"RAL 5026", name:"Pearl night blue", L:21.8, a:2.4, b:-24.1},
+      {code:"RAL 6000", name:"Patina green", L:48.4, a:-26.4, b:3.4},
+      {code:"RAL 6001", name:"Emerald green", L:44.7, a:-34.5, b:26.2},
+      {code:"RAL 6002", name:"Leaf green", L:43.4, a:-30.2, b:20.8},
+      {code:"RAL 6003", name:"Olive green", L:38.4, a:-10.8, b:12.4},
+      {code:"RAL 6004", name:"Blue green", L:26.4, a:-18.4, b:-2.4},
+      {code:"RAL 6005", name:"Moss green", L:29.5, a:-14.8, b:7.2},
+      {code:"RAL 6006", name:"Grey olive", L:26.4, a:-1.8, b:4.8},
+      {code:"RAL 6007", name:"Bottle green", L:23.4, a:-8.4, b:7.4},
+      {code:"RAL 6008", name:"Brown green", L:22.4, a:-0.8, b:4.2},
+      {code:"RAL 6009", name:"Fir green", L:23.8, a:-9.8, b:4.8},
+      {code:"RAL 6010", name:"Grass green", L:45.8, a:-28.4, b:32.4},
+      {code:"RAL 6011", name:"Reseda green", L:51.2, a:-18.4, b:18.4},
+      {code:"RAL 6012", name:"Black green", L:24.1, a:-7.4, b:1.2},
+      {code:"RAL 6013", name:"Reed green", L:51.4, a:-6.8, b:16.4},
+      {code:"RAL 6014", name:"Yellow olive", L:28.4, a:-0.8, b:8.4},
+      {code:"RAL 6015", name:"Black olive", L:26.4, a:-0.4, b:4.2},
       {code:"RAL 6016", name:"Turquoise green", L:40.1, a:-36.4, b:8.4},
+      {code:"RAL 6017", name:"May green", L:53.4, a:-29.8, b:34.2},
+      {code:"RAL 6018", name:"Yellow green", L:60.3, a:-36.8, b:46.1},
+      {code:"RAL 6019", name:"Pastel green", L:81.2, a:-14.2, b:14.2},
+      {code:"RAL 6020", name:"Chrome green", L:29.4, a:-9.4, b:9.8},
+      {code:"RAL 6021", name:"Pale green", L:63.8, a:-14.2, b:14.8},
+      {code:"RAL 6022", name:"Olive drab", L:21.2, a:2.4, b:7.4},
+      {code:"RAL 6024", name:"Traffic green", L:48.2, a:-45.1, b:16.5},
+      {code:"RAL 6025", name:"Fern green", L:46.8, a:-22.4, b:27.4},
+      {code:"RAL 6026", name:"Opal green", L:36.4, a:-34.2, b:4.8},
+      {code:"RAL 6027", name:"Light green", L:70.4, a:-24.1, b:-8.4},
+      {code:"RAL 6028", name:"Pine green", L:35.4, a:-18.4, b:4.8},
+      {code:"RAL 6029", name:"Mint green", L:41.2, a:-41.2, b:14.8},
+      {code:"RAL 6031", name:"Bronze green", L:38.4, a:-4.8, b:9.4},
+      {code:"RAL 6032", name:"Signal green", L:51.2, a:-38.4, b:17.4},
+      {code:"RAL 6033", name:"Mint turquoise", L:53.4, a:-24.1, b:-1.2},
+      {code:"RAL 6034", name:"Pastel turquoise", L:65.4, a:-18.4, b:-7.4},
+      {code:"RAL 6035", name:"Pearl green", L:30.4, a:-24.1, b:12.4},
+      {code:"RAL 6036", name:"Pearl opal green", L:32.1, a:-28.4, b:2.4},
+      {code:"RAL 6037", name:"Pure green", L:51.4, a:-46.8, b:38.4},
+      {code:"RAL 6038", name:"Luminous green", L:59.4, a:-58.4, b:47.4},
+      {code:"RAL 7000", name:"Squirrel grey", L:56.4, a:-2.8, b:-5.8},
+      {code:"RAL 7001", name:"Silver grey", L:62.4, a:-2.1, b:-3.8},
+      {code:"RAL 7002", name:"Olive grey", L:54.8, a:-0.8, b:9.8},
+      {code:"RAL 7003", name:"Moss grey", L:51.2, a:-0.8, b:4.8},
       {code:"RAL 7004", name:"Signal grey", L:65.4, a:-0.4, b:-0.8},
+      {code:"RAL 7005", name:"Mouse grey", L:47.2, a:-1.2, b:0.8},
+      {code:"RAL 7006", name:"Beige grey", L:48.4, a:1.8, b:8.4},
+      {code:"RAL 7008", name:"Khaki grey", L:42.1, a:3.8, b:18.4},
+      {code:"RAL 7009", name:"Green grey", L:41.2, a:-1.8, b:3.4},
+      {code:"RAL 7010", name:"Tarpaulin grey", L:39.8, a:-1.2, b:1.8},
+      {code:"RAL 7011", name:"Iron grey", L:40.1, a:-1.4, b:-2.8},
+      {code:"RAL 7012", name:"Basalt grey", L:40.8, a:-1.2, b:-1.4},
+      {code:"RAL 7013", name:"Brown grey", L:38.4, a:0.8, b:6.4},
+      {code:"RAL 7015", name:"Slate grey", L:36.4, a:-0.4, b:-1.8},
       {code:"RAL 7016", name:"Anthracite grey", L:29.3, a:-0.6, b:-3.7},
+      {code:"RAL 7021", name:"Black grey", L:22.4, a:-0.2, b:-1.4},
+      {code:"RAL 7022", name:"Umbra grey", L:33.4, a:0.2, b:2.4},
+      {code:"RAL 7023", name:"Concrete grey", L:56.4, a:-1.4, b:4.8},
       {code:"RAL 7024", name:"Graphite grey", L:33.7, a:-0.7, b:-2.9},
+      {code:"RAL 7026", name:"Granite grey", L:30.4, a:-2.8, b:-2.1},
+      {code:"RAL 7030", name:"Stone grey", L:60.4, a:-0.4, b:4.8},
+      {code:"RAL 7031", name:"Blue grey", L:45.8, a:-2.1, b:-4.8},
+      {code:"RAL 7032", name:"Pebble grey", L:72.4, a:-0.4, b:7.8},
+      {code:"RAL 7033", name:"Cement grey", L:56.4, a:-1.8, b:4.2},
+      {code:"RAL 7034", name:"Yellow grey", L:58.4, a:-0.4, b:10.8},
       {code:"RAL 7035", name:"Light grey", L:82.1, a:-1.0, b:0.8},
+      {code:"RAL 7036", name:"Platinum grey", L:62.4, a:0.8, b:0.4},
+      {code:"RAL 7037", name:"Dusty grey", L:53.4, a:-0.2, b:-0.4},
+      {code:"RAL 7038", name:"Agate grey", L:73.4, a:-0.8, b:2.4},
+      {code:"RAL 7039", name:"Quartz grey", L:45.8, a:0.8, b:4.8},
       {code:"RAL 7040", name:"Window grey", L:67.2, a:-1.4, b:-2.8},
+      {code:"RAL 7042", name:"Traffic grey A", L:61.4, a:-1.2, b:-0.8},
+      {code:"RAL 7043", name:"Traffic grey B", L:37.4, a:-0.4, b:-0.4},
+      {code:"RAL 7044", name:"Silk grey", L:73.8, a:0.4, b:6.4},
+      {code:"RAL 7045", name:"Telegrey 1", L:62.4, a:-1.2, b:-1.8},
+      {code:"RAL 7046", name:"Telegrey 2", L:56.8, a:-1.4, b:-2.4},
+      {code:"RAL 7047", name:"Telegrey 4", L:78.9, a:-0.2, b:0.7},
+      {code:"RAL 7048", name:"Pearl mouse grey", L:54.2, a:0.4, b:3.4},
+      {code:"RAL 8000", name:"Green brown", L:48.4, a:6.8, b:28.4},
+      {code:"RAL 8001", name:"Ochre brown", L:46.1, a:18.2, b:36.4},
+      {code:"RAL 8002", name:"Signal brown", L:34.2, a:21.4, b:19.8},
+      {code:"RAL 8003", name:"Clay brown", L:39.4, a:21.2, b:31.2},
+      {code:"RAL 8004", name:"Copper brown", L:38.4, a:29.4, b:28.4},
+      {code:"RAL 8007", name:"Fawn brown", L:36.4, a:18.4, b:24.1},
+      {code:"RAL 8008", name:"Olive brown", L:38.4, a:16.4, b:28.4},
+      {code:"RAL 8011", name:"Nut brown", L:30.2, a:13.8, b:17.5},
+      {code:"RAL 8012", name:"Red brown", L:30.4, a:22.4, b:16.4},
+      {code:"RAL 8014", name:"Sepia brown", L:26.4, a:9.8, b:12.4},
+      {code:"RAL 8015", name:"Chestnut brown", L:27.4, a:19.4, b:16.4},
+      {code:"RAL 8016", name:"Mahogany brown", L:25.4, a:17.4, b:14.2},
       {code:"RAL 8017", name:"Chocolate brown", L:25.8, a:7.6, b:9.8},
+      {code:"RAL 8019", name:"Grey brown", L:25.4, a:1.8, b:2.4},
+      {code:"RAL 8022", name:"Black brown", L:16.4, a:0.8, b:0.8},
+      {code:"RAL 8023", name:"Orange brown", L:49.8, a:28.4, b:38.4},
+      {code:"RAL 8024", name:"Beige brown", L:40.1, a:14.2, b:22.4},
+      {code:"RAL 8025", name:"Pale brown", L:42.1, a:11.2, b:16.4},
+      {code:"RAL 8028", name:"Terra brown", L:29.4, a:8.4, b:11.8},
+      {code:"RAL 8029", name:"Pearl copper", L:32.1, a:26.4, b:22.4},
+      {code:"RAL 9001", name:"Cream", L:91.2, a:-0.8, b:5.8},
+      {code:"RAL 9002", name:"Grey white", L:87.8, a:-1.4, b:3.4},
       {code:"RAL 9003", name:"Signal white", L:95.2, a:-0.6, b:1.8},
+      {code:"RAL 9004", name:"Signal black", L:18.4, a:-0.2, b:-0.8},
       {code:"RAL 9005", name:"Jet black", L:5.1, a:0.1, b:-0.5},
       {code:"RAL 9006", name:"White aluminium", L:68.4, a:-0.8, b:0.4},
-      {code:"RAL 9010", name:"Pure white", L:93.8, a:0.2, b:5.1}
+      {code:"RAL 9007", name:"Grey aluminium", L:56.4, a:-0.4, b:0.8},
+      {code:"RAL 9010", name:"Pure white", L:93.8, a:0.2, b:5.1},
+      {code:"RAL 9011", name:"Graphite black", L:16.4, a:-0.4, b:-0.8},
+      {code:"RAL 9016", name:"Traffic white", L:96.1, a:-0.2, b:1.1},
+      {code:"RAL 9017", name:"Traffic black", L:16.8, a:0.2, b:-0.2},
+      {code:"RAL 9018", name:"Papyrus white", L:81.4, a:-1.4, b:1.8},
+      {code:"RAL 9022", name:"Pearl light grey", L:60.4, a:-0.4, b:0.8},
+      {code:"RAL 9023", name:"Pearl dark grey", L:52.4, a:-0.4, b:-0.2}
     ],
     ral_design: [
       {code:"RAL 000 15 00", name:"Graphite black", L:15.0, a:0.0, b:0.0},
@@ -516,7 +719,7 @@
     ]
   };
 
-  // МАТЕМАТИЧЕСКИЕ КОНВЕРТЕРЫ
+  // МАТЕМАТИКА КОЛОРИМЕТРИИ
   function labToRgb(L, a, b) {
     let y = (L + 16) / 116;
     let x = a / 500 + y;
@@ -564,7 +767,6 @@
     return {L, C, h};
   }
 
-  // CIEDE2000
   function deltaE00(L1, a1, b1, L2, a2, b2) {
     const rad = Math.PI / 180;
     let avgL = (L1 + L2) / 2;
@@ -601,7 +803,6 @@
     return Math.sqrt(Math.pow(dLp / sL, 2) + Math.pow(dCp / sC, 2) + Math.pow(dHp / sH, 2) + rT * (dCp / sC) * (dHp / sH));
   }
 
-  // ПЕРЕКЛЮЧЕНИЕ КАТАЛОГА
   function setCatalog(catalogKey) {
     currentCatalog = catalogKey;
     document.querySelectorAll('.catalog-tab').forEach(tab => tab.classList.remove('active'));
@@ -612,7 +813,6 @@
     }
   }
 
-  // ОБНОВЛЕНИЕ ДАННЫХ
   function updateCatalogSearch(L, a, b) {
     const list = CATALOGS[currentCatalog];
     let ranked = list.map(item => {
@@ -651,9 +851,15 @@
       let [r3, g3, b3] = labToRgb(top3.L, top3.a, top3.b);
       document.getElementById('alt2Swatch').style.backgroundColor = `rgb(${r3},${g3},${b3})`;
     }
+
+    lastReportData = {
+      code: top1.code,
+      name: top1.name,
+      dE: top1.dE.toFixed(2),
+      catalog: currentCatalog.toUpperCase()
+    };
   }
 
-  // ОБРАБОТКА ДАННЫХ BLE СО СКАНЕРА
   function handleTelemetry(event) {
     const raw = new TextDecoder().decode(event.target.value);
     try {
@@ -663,13 +869,11 @@
       const [L, a, b] = data.lab;
       lastMeasuredLab = [L, a, b];
 
-      // 1. Модели цвета
       const [r, g, bl] = labToRgb(L, a, b);
       const hex = rgbToHex(r, g, bl);
       const cmyk = rgbToCmyk(r, g, bl);
       const lch = labToLch(L, a, b);
 
-      // 2. Отрисовка плашки
       const swatch = document.getElementById('dominantSwatch');
       swatch.style.backgroundColor = hex;
       document.getElementById('hexVal').innerText = hex.toUpperCase();
@@ -678,19 +882,16 @@
       document.getElementById('mainColorCode').style.color = textColor;
       document.getElementById('mainColorName').style.color = textColor;
 
-      // 3. Вывод численных параметров
       document.getElementById('labText').innerText = `${L.toFixed(1)} ${a.toFixed(1)} ${b.toFixed(1)}`;
       document.getElementById('rgbText').innerText = `${r} ${g} ${bl}`;
       document.getElementById('lchText').innerText = `${lch.L.toFixed(0)} / ${lch.C.toFixed(0)} / ${lch.h.toFixed(0)}°`;
 
-      // 4. CMYK полосы
       document.getElementById('cmykText').innerText = `C:${cmyk.c}% M:${cmyk.m}% Y:${cmyk.y}% K:${cmyk.k}%`;
       document.getElementById('barC').style.width = cmyk.c + '%';
       document.getElementById('barM').style.width = cmyk.m + '%';
       document.getElementById('barY').style.width = cmyk.y + '%';
       document.getElementById('barK').style.width = cmyk.k + '%';
 
-      // 5. Поиск по активному каталогу
       updateCatalogSearch(L, a, b);
 
     } catch (e) {
@@ -698,7 +899,33 @@
     }
   }
 
-  // BLUETOOTH ПОДКЛЮЧЕНИЕ
+  function copyReport() {
+    if (!lastMeasuredLab || !lastReportData) {
+      alert("Сначала выполните измерение!");
+      return;
+    }
+    const [L, a, b] = lastMeasuredLab;
+    const [r, g, bl] = labToRgb(L, a, b);
+    const hex = rgbToHex(r, g, bl).toUpperCase();
+    const cmyk = rgbToCmyk(r, g, bl);
+
+    const report = 
+`--- COLOR SCAN REPORT ---
+Эталон: ${lastReportData.code} (${lastReportData.name})
+Каталог: ${lastReportData.catalog} | ΔE00: ${lastReportData.dE}
+CIE L*a*b*: ${L.toFixed(2)}, ${a.toFixed(2)}, ${b.toFixed(2)}
+HEX: ${hex}
+sRGB: ${r}, ${g}, ${bl}
+CMYK: C:${cmyk.c}% M:${cmyk.m}% Y:${cmyk.y}% K:${cmyk.k}%
+-------------------------`;
+
+    navigator.clipboard.writeText(report).then(() => {
+      const btn = document.getElementById('btnCopy');
+      btn.innerText = "Скопировано!";
+      setTimeout(() => btn.innerText = "Экспорт", 2000);
+    });
+  }
+
   async function handlePowerToggle() {
     const sw = document.getElementById('powerBtn');
     const label = document.getElementById('switchStatus');
