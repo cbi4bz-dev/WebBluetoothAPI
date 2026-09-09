@@ -10,7 +10,9 @@
       --card: #1e293b;
       --text: #f8fafc;
       --accent: #2563eb;
+      --border: #334155;
     }
+    * { box-sizing: border-box; }
     body {
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
       background: var(--bg);
@@ -37,7 +39,9 @@
       font-size: 15px;
       font-weight: 600;
       cursor: pointer;
+      transition: background 0.2s;
     }
+    button:active { filter: brightness(0.9); }
     .status-bar {
       font-size: 13px;
       color: #94a3b8;
@@ -47,17 +51,16 @@
       background: var(--card);
       border-radius: 12px;
       padding: 16px;
-      border: 1px solid #334155;
+      border: 1px solid var(--border);
     }
     .color-swatch {
-      height: 120px;
+      height: 130px;
       border-radius: 8px;
       border: 1px solid rgba(255,255,255,0.2);
       margin-bottom: 12px;
       display: flex;
       align-items: flex-end;
-      padding: 8px 12px;
-      box-sizing: border-box;
+      padding: 10px 12px;
       font-size: 11px;
       font-family: monospace;
       color: #fff;
@@ -68,12 +71,13 @@
     .title-row {
       display: flex;
       justify-content: space-between;
-      align-items: center;
+      align-items: flex-start;
       margin-bottom: 6px;
     }
     .ral-code {
       font-size: 26px;
       font-weight: 700;
+      line-height: 1.1;
     }
     .badge {
       padding: 4px 8px;
@@ -81,12 +85,13 @@
       font-size: 11px;
       font-weight: 700;
       text-transform: uppercase;
+      white-space: nowrap;
     }
     .alt-row {
       display: flex;
       justify-content: space-between;
-      padding: 6px 0;
-      border-bottom: 1px solid #334155;
+      padding: 8px 0;
+      border-bottom: 1px solid var(--border);
       font-size: 13px;
     }
     .alt-row:last-child { border: none; }
@@ -98,14 +103,13 @@
   <button id="connectBtn" onclick="toggleConnect()">Подключить сканер</button>
   <div id="status" class="status-bar">Статус: Отключено</div>
 
-  <!-- Панель результата -->
   <div class="panel" id="resultPanel" style="display: none;">
     <div id="swatch" class="color-swatch">Lab: ---, ---, ---</div>
     
     <div class="title-row">
       <div>
         <div id="ralCode" class="ral-code">RAL ----</div>
-        <div id="ralName" style="color: #94a3b8; font-size: 14px;">---</div>
+        <div id="ralName" style="color: #94a3b8; font-size: 14px; margin-top: 2px;">---</div>
       </div>
       <div id="badge" class="badge">---</div>
     </div>
@@ -116,9 +120,8 @@
     </div>
   </div>
 
-  <!-- Ближайшие кандидаты -->
   <div class="panel" id="altPanel" style="display: none;">
-    <div style="font-size: 12px; color: #94a3b8; text-transform: uppercase; margin-bottom: 8px;">
+    <div style="font-size: 12px; color: #94a3b8; text-transform: uppercase; margin-bottom: 6px;">
       Ближайшие совпадения
     </div>
     <div class="alt-row">
@@ -139,7 +142,6 @@
   let bleDevice = null;
   let gattServer = null;
 
-  // Точный конвертер CIE Lab (D65) в экранный sRGB
   function labToRgb(L, a, b) {
     let y = (L + 16) / 116;
     let x = a / 500 + y;
@@ -213,7 +215,7 @@
 
       document.getElementById('ralCode').innerText = data.ral;
       document.getElementById('ralName').innerText = data.name;
-      document.getElementById('deVal').innerText = data.dE.toFixed(2);
+      document.getElementById('deVal').innerText = Number(data.dE).toFixed(2);
       document.getElementById('confVal').innerText = data.confidence;
 
       const badge = document.getElementById('badge');
@@ -230,14 +232,14 @@
         const rgb = labToRgb(data.lab[0], data.lab[1], data.lab[2]);
         const swatch = document.getElementById('swatch');
         swatch.style.backgroundColor = rgb;
-        swatch.innerText = `Lab: ${data.lab[0].toFixed(1)}, ${data.lab[1].toFixed(1)}, ${data.lab[2].toFixed(1)}`;
+        swatch.innerText = `Lab: ${Number(data.lab[0]).toFixed(1)}, ${Number(data.lab[1]).toFixed(1)}, ${Number(data.lab[2]).toFixed(1)}`;
       }
 
       if (data.alternatives && data.alternatives.length >= 2) {
         document.getElementById('alt1').innerText = "2. " + data.alternatives[0].ral;
-        document.getElementById('alt1De').innerText = "ΔE " + data.alternatives[0].dE.toFixed(1);
+        document.getElementById('alt1De').innerText = "ΔE " + Number(data.alternatives[0].dE).toFixed(1);
         document.getElementById('alt2').innerText = "3. " + data.alternatives[1].ral;
-        document.getElementById('alt2De').innerText = "ΔE " + data.alternatives[1].dE.toFixed(1);
+        document.getElementById('alt2De').innerText = "ΔE " + Number(data.alternatives[1].dE).toFixed(1);
       }
 
     } catch (e) {
