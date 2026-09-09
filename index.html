@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <title>RAL Core Colorimeter</title>
+  <title>Colorimeter Station Pro</title>
   <style>
     :root {
       --bg: #07090e;
@@ -28,15 +28,15 @@
       font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", Inter, sans-serif;
       background-color: var(--bg);
       color: var(--text);
-      height: 100vh;
-      height: 100dvh;
+      min-height: 100vh;
+      min-height: 100dvh;
       display: flex;
       flex-direction: column;
-      overflow: hidden;
+      overflow-x: hidden;
       padding: env(safe-area-inset-top) 16px env(safe-area-inset-bottom) 16px;
     }
 
-    /* ЭКРАН 1: СТИЛИЗОВАННЫЙ ВЫКЛЮЧАТЕЛЬ */
+    /* ЭКРАН 1: ВЫКЛЮЧАТЕЛЬ */
     #connectScreen {
       flex: 1;
       display: flex;
@@ -59,14 +59,6 @@
       font-size: 15px;
       color: var(--text-dim);
     }
-
-    /* 3D Неоновый тумблер */
-    .switch-wrapper {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 20px;
-    }
     .power-switch {
       width: 110px;
       height: 190px;
@@ -86,9 +78,7 @@
       height: 90px;
       background: linear-gradient(145deg, #1e2638, #151b27);
       border-radius: 50%;
-      box-shadow: 
-        0 8px 20px rgba(0,0,0,0.6),
-        inset 0 1px 1px rgba(255,255,255,0.2);
+      box-shadow: 0 8px 20px rgba(0,0,0,0.6), inset 0 1px 1px rgba(255,255,255,0.2);
       display: flex;
       align-items: center;
       justify-content: center;
@@ -100,7 +90,7 @@
       stroke: var(--text-dim);
       stroke-width: 2.5;
       fill: none;
-      transition: stroke 0.3s, filter 0.3s;
+      transition: stroke 0.3s;
     }
     .power-switch.connecting .power-knob {
       transform: translateY(80px);
@@ -117,21 +107,21 @@
       color: var(--text-dim);
       text-transform: uppercase;
       letter-spacing: 0.1em;
+      margin-top: 16px;
     }
 
-    /* ЭКРАН 2: ПРИБОРНАЯ ПАНЕЛЬ */
+    /* ЭКРАН 2: ДАШБОРД */
     #dashboardScreen {
       flex: 1;
       display: none;
       flex-direction: column;
-      gap: 14px;
-      padding-top: 10px;
+      gap: 12px;
+      padding-top: 8px;
     }
     .top-nav {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      padding: 0 4px;
     }
     .conn-status {
       display: flex;
@@ -163,20 +153,46 @@
       cursor: pointer;
     }
 
-    /* ГИГАНТСКАЯ ДОМИНИРУЮЩАЯ ПЛАШКА */
+    /* ПЕРЕКЛЮЧАТЕЛЬ ПАЛИТР */
+    .catalog-selector {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      background: #111622;
+      border: 1px solid var(--card-border);
+      border-radius: 14px;
+      padding: 3px;
+      gap: 3px;
+    }
+    .catalog-tab {
+      background: transparent;
+      border: none;
+      color: var(--text-dim);
+      padding: 8px 0;
+      border-radius: 10px;
+      font-size: 11px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .catalog-tab.active {
+      background: var(--accent);
+      color: #fff;
+      box-shadow: 0 2px 8px var(--accent-glow);
+    }
+
+    /* ДОМИНИРУЮЩАЯ ПЛАШКА */
     .dominant-swatch {
-      flex: 1.4;
-      border-radius: 28px;
-      padding: 24px;
+      border-radius: 24px;
+      padding: 20px;
       display: flex;
       flex-direction: column;
       justify-content: space-between;
       background: #161b26;
       border: 1px solid rgba(255,255,255,0.12);
-      box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+      box-shadow: 0 16px 40px rgba(0,0,0,0.5);
       position: relative;
       transition: background-color 0.4s ease;
-      min-height: 220px;
+      min-height: 190px;
     }
     .swatch-header {
       display: flex;
@@ -188,137 +204,153 @@
       font-weight: 800;
       text-transform: uppercase;
       letter-spacing: 0.08em;
-      padding: 6px 14px;
+      padding: 6px 12px;
       border-radius: 30px;
       background: rgba(0, 0, 0, 0.6);
       backdrop-filter: blur(16px);
       -webkit-backdrop-filter: blur(16px);
       border: 1px solid rgba(255, 255, 255, 0.15);
     }
-    .lab-capsule {
+    .hex-capsule {
       font-family: ui-monospace, SFMono-Regular, monospace;
-      font-size: 12px;
+      font-size: 14px;
+      font-weight: 700;
       padding: 6px 12px;
       border-radius: 12px;
       background: rgba(0, 0, 0, 0.6);
       backdrop-filter: blur(16px);
       -webkit-backdrop-filter: blur(16px);
       border: 1px solid rgba(255, 255, 255, 0.15);
-      color: rgba(255,255,255,0.9);
+      color: #fff;
     }
     .swatch-body {
       display: flex;
       flex-direction: column;
     }
-    .main-ral {
-      font-size: 52px;
+    .main-code {
+      font-size: 44px;
       font-weight: 900;
       letter-spacing: -0.04em;
       line-height: 1;
-      text-shadow: 0 2px 10px rgba(0,0,0,0.3);
     }
     .main-name {
-      font-size: 20px;
+      font-size: 17px;
       font-weight: 600;
-      margin-top: 6px;
+      margin-top: 4px;
       opacity: 0.9;
     }
 
-    /* ПАНЕЛЬ МЕТРИК */
-    .metrics-panel {
+    /* СЕТКА CMYK И ПАРАМЕТРОВ */
+    .color-models-grid {
       display: grid;
       grid-template-columns: 1fr 1fr;
-      gap: 10px;
+      gap: 8px;
     }
-    .metric-card {
+    .model-card {
       background: var(--card-bg);
       backdrop-filter: blur(20px);
       -webkit-backdrop-filter: blur(20px);
       border: 1px solid var(--card-border);
-      border-radius: 20px;
-      padding: 14px 18px;
+      border-radius: 16px;
+      padding: 10px 14px;
     }
-    .metric-title {
-      font-size: 11px;
+    .model-title {
+      font-size: 10px;
       font-weight: 700;
       color: var(--text-dim);
       text-transform: uppercase;
       letter-spacing: 0.05em;
+      margin-bottom: 2px;
     }
-    .metric-num {
-      font-size: 28px;
-      font-weight: 800;
+    .model-val {
+      font-family: ui-monospace, monospace;
+      font-size: 15px;
+      font-weight: 700;
       color: #fff;
-      margin-top: 2px;
-      display: flex;
-      align-items: baseline;
-      gap: 4px;
     }
-    .metric-unit {
-      font-size: 13px;
-      font-weight: 600;
+    /* Визуализатор CMYK */
+    .cmyk-bars {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 4px;
+      margin-top: 6px;
+    }
+    .cmyk-bar-wrap {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      font-size: 9px;
+      font-weight: 700;
       color: var(--text-dim);
+      text-align: center;
+    }
+    .cmyk-track {
+      height: 4px;
+      background: rgba(255,255,255,0.1);
+      border-radius: 2px;
+      overflow: hidden;
+    }
+    .cmyk-fill {
+      height: 100%;
+      width: 0%;
+      border-radius: 2px;
     }
 
     /* АЛЬТЕРНАТИВЫ */
     .alts-wrapper {
       display: flex;
       flex-direction: column;
-      gap: 8px;
+      gap: 6px;
     }
     .alts-title {
-      font-size: 11px;
+      font-size: 10px;
       font-weight: 700;
       color: var(--text-dim);
       text-transform: uppercase;
       letter-spacing: 0.06em;
-      padding-left: 4px;
+      padding-left: 2px;
     }
     .alt-tile {
       display: flex;
       align-items: center;
       background: var(--card-bg);
       border: 1px solid var(--card-border);
-      border-radius: 18px;
-      padding: 10px 14px;
-      gap: 14px;
+      border-radius: 14px;
+      padding: 8px 12px;
+      gap: 12px;
     }
     .alt-capsule {
-      width: 48px;
-      height: 48px;
-      border-radius: 14px;
+      width: 38px;
+      height: 38px;
+      border-radius: 10px;
       border: 1px solid rgba(255,255,255,0.15);
       flex-shrink: 0;
-      box-shadow: inset 0 0 10px rgba(0,0,0,0.2);
     }
-    .alt-info {
-      flex: 1;
-    }
-    .alt-ral-name {
-      font-size: 17px;
+    .alt-name {
+      font-size: 15px;
       font-weight: 800;
       letter-spacing: -0.01em;
     }
     .alt-de-tag {
-      font-size: 14px;
+      font-size: 13px;
       font-weight: 700;
       color: var(--text-dim);
       background: rgba(255, 255, 255, 0.05);
-      padding: 6px 10px;
-      border-radius: 10px;
+      padding: 4px 8px;
+      border-radius: 8px;
     }
   </style>
 </head>
 <body>
 
-  <!-- ЭКРАН 1: ВЫКЛЮЧАТЕЛЬ -->
+  <!-- ЭКРАН 1: ПЕРЕКЛЮЧАТЕЛЬ -->
   <section id="connectScreen">
     <div class="hero-text">
-      <h1>RAL Core Pro</h1>
-      <p>Спектроколориметрическая станция</p>
+      <h1>Color Station</h1>
+      <p>Спектроколориметрическая система</p>
     </div>
 
-    <div class="switch-wrapper">
+    <div>
       <div id="powerBtn" class="power-switch" onclick="handlePowerToggle()">
         <div class="power-knob">
           <svg class="power-icon" viewBox="0 0 24 24">
@@ -326,13 +358,13 @@
           </svg>
         </div>
       </div>
-      <div id="switchStatus" class="switch-label">Нажмите для старта</div>
+      <div id="switchStatus" class="switch-label">Включить прибор</div>
     </div>
 
-    <div style="font-size: 12px; color: rgba(255,255,255,0.2);">ESP32-C3 Engine • CIEDE2000</div>
+    <div style="font-size: 12px; color: rgba(255,255,255,0.2);">BLE CIE D65/10° • Multi-Catalog</div>
   </section>
 
-  <!-- ЭКРАН 2: ДАШБОРД ЗАМЕРОВ -->
+  <!-- ЭКРАН 2: ДАШБОРД -->
   <section id="dashboardScreen">
     <div class="top-nav">
       <div class="conn-status">
@@ -342,46 +374,81 @@
       <button class="btn-off" onclick="disconnectDevice()">Выключить</button>
     </div>
 
-    <!-- Крупная плашка цвета -->
+    <!-- ВЫБОР ПАЛИТРЫ -->
+    <div class="catalog-selector">
+      <button class="catalog-tab active" onclick="setCatalog('ral_classic')">RAL Classic</button>
+      <button class="catalog-tab" onclick="setCatalog('ral_design')">RAL Design</button>
+      <button class="catalog-tab" onclick="setCatalog('ncs')">NCS</button>
+      <button class="catalog-tab" onclick="setCatalog('pantone')">Pantone</button>
+    </div>
+
+    <!-- ГЛАВНЫЙ ЦВЕТ -->
     <div id="dominantSwatch" class="dominant-swatch">
       <div class="swatch-header">
         <div id="qualityPill" class="quality-pill">ОЖИДАНИЕ ЗАМЕРА</div>
-        <div id="labValues" class="lab-capsule">L: -- a: -- b: --</div>
+        <div id="hexVal" class="hex-capsule">#------</div>
       </div>
       <div class="swatch-body">
-        <div id="ralCode" class="main-ral">RAL ----</div>
-        <div id="ralName" class="main-name">Приложите датчик к детали</div>
+        <div id="mainColorCode" class="main-code">----</div>
+        <div id="mainColorName" class="main-name">Приложите датчик к образцу</div>
       </div>
     </div>
 
-    <!-- Показатели -->
-    <div class="metrics-panel">
-      <div class="metric-card">
-        <div class="metric-title">Погрешность</div>
-        <div class="metric-num"><span id="deVal">0.00</span> <span class="metric-unit">ΔE00</span></div>
+    <!-- СЕТКА МОДЕЛЕЙ (CMYK / Lab / RGB / LCh) -->
+    <div class="color-models-grid">
+      <!-- CMYK -->
+      <div class="model-card" style="grid-column: span 2;">
+        <div style="display: flex; justify-content: space-between; align-items: baseline;">
+          <div class="model-title">CMYK (Печатный стандарт)</div>
+          <div id="cmykText" style="font-size: 13px; font-weight: 700; color: var(--accent);">C:0 M:0 Y:0 K:0</div>
+        </div>
+        <div class="cmyk-bars">
+          <div class="cmyk-bar-wrap"><span>C</span><div class="cmyk-track"><div id="barC" class="cmyk-fill" style="background:#06b6d4;"></div></div></div>
+          <div class="cmyk-bar-wrap"><span>M</span><div class="cmyk-track"><div id="barM" class="cmyk-fill" style="background:#ec4899;"></div></div></div>
+          <div class="cmyk-bar-wrap"><span>Y</span><div class="cmyk-track"><div id="barY" class="cmyk-fill" style="background:#eab308;"></div></div></div>
+          <div class="cmyk-bar-wrap"><span>K</span><div class="cmyk-track"><div id="barK" class="cmyk-fill" style="background:#94a3b8;"></div></div></div>
+        </div>
       </div>
-      <div class="metric-card">
-        <div class="metric-title">Сходство</div>
-        <div class="metric-num"><span id="confVal">0</span> <span class="metric-unit">%</span></div>
+
+      <!-- CIE Lab -->
+      <div class="model-card">
+        <div class="model-title">CIE L*a*b*</div>
+        <div id="labText" class="model-val">-- -- --</div>
+      </div>
+
+      <!-- sRGB -->
+      <div class="model-card">
+        <div class="model-title">sRGB (Экран)</div>
+        <div id="rgbText" class="model-val">-- -- --</div>
+      </div>
+
+      <!-- LCh -->
+      <div class="model-card">
+        <div class="model-title">CIE L*C*h°</div>
+        <div id="lchText" class="model-val">-- -- --</div>
+      </div>
+
+      <!-- Погрешность поиска -->
+      <div class="model-card">
+        <div class="model-title">ΔE00 / Совпадение</div>
+        <div id="deltaText" class="model-val">0.00 <span style="font-size:12px; font-weight:normal; color:var(--text-dim);">ΔE</span></div>
       </div>
     </div>
 
-    <!-- Альтернативы -->
+    <!-- АЛЬТЕРНАТИВЫ -->
     <div class="alts-wrapper">
-      <div class="alts-title">Ближайшие совпадения каталога</div>
-
+      <div class="alts-title">Ближайшие артикулы выбранного каталога</div>
       <div class="alt-tile">
         <div id="alt1Swatch" class="alt-capsule"></div>
-        <div class="alt-info">
-          <div id="alt1Code" class="alt-ral-name">RAL ----</div>
+        <div style="flex:1;">
+          <div id="alt1Code" class="alt-name">----</div>
         </div>
         <div id="alt1De" class="alt-de-tag">ΔE --</div>
       </div>
-
       <div class="alt-tile">
         <div id="alt2Swatch" class="alt-capsule"></div>
-        <div class="alt-info">
-          <div id="alt2Code" class="alt-ral-name">RAL ----</div>
+        <div style="flex:1;">
+          <div id="alt2Code" class="alt-name">----</div>
         </div>
         <div id="alt2De" class="alt-de-tag">ΔE --</div>
       </div>
@@ -393,31 +460,63 @@
   const CHAR_TX_UUID = "6e400003-b5a3-f393-e0a9-e50e24dcca9e";
 
   let bleDevice = null;
+  let currentCatalog = 'ral_classic';
+  let lastMeasuredLab = null;
 
-  // База эталонных Lab для вычисления альтернативных плашек
-  const ralRefLab = {
-    "RAL 1000": [76.5, 1.2, 28.1],   "RAL 1001": [75.8, 5.7, 26.2],   "RAL 1002": [73.2, 7.4, 39.6],
-    "RAL 1013": [86.8, 0.4, 10.8],   "RAL 1014": [80.4, 3.7, 24.1],   "RAL 1015": [84.4, 2.8, 16.9],
-    "RAL 1019": [64.2, 3.8, 15.4],   "RAL 1020": [60.8, 1.2, 25.6],   "RAL 1023": [78.4, 11.2, 78.8],
-    "RAL 1035": [56.4, 2.2, 10.8],   "RAL 2002": [45.8, 51.4, 44.2],  "RAL 3000": [45.2, 50.1, 37.4],
-    "RAL 3001": [41.2, 50.8, 32.1],  "RAL 3007": [21.2, 18.4, 5.6],   "RAL 3012": [61.4, 21.8, 22.4],
-    "RAL 3014": [58.4, 32.8, 16.8],  "RAL 3015": [69.8, 24.1, 11.8],  "RAL 3016": [44.2, 41.8, 31.2],
-    "RAL 3018": [48.4, 52.1, 24.6],  "RAL 3020": [46.9, 59.8, 44.5],  "RAL 3027": [41.2, 52.4, 26.4],
-    "RAL 3028": [45.8, 62.4, 43.1],  "RAL 5001": [31.2, -16.4, -21.2],"RAL 5002": [24.1, 13.5, -44.8],
-    "RAL 5003": [22.4, 0.8, -24.1],  "RAL 5005": [33.2, -1.9, -37.2], "RAL 5013": [20.8, 3.4, -26.4],
-    "RAL 5015": [48.2, -13.5, -31.7],"RAL 5017": [28.4, -7.4, -28.4], "RAL 5019": [37.4, -12.4, -27.4],
-    "RAL 5022": [21.2, 8.4, -31.2],  "RAL 6004": [26.4, -18.4, -2.4], "RAL 6016": [40.1, -36.4, 8.4],
-    "RAL 6026": [36.4, -34.2, 4.8],  "RAL 6028": [35.4, -18.4, 4.8],  "RAL 6036": [32.1, -28.4, 2.4],
-    "RAL 7004": [65.4, -0.4, -0.8],  "RAL 7016": [29.3, -0.6, -3.7],  "RAL 7024": [33.7, -0.7, -2.9],
-    "RAL 7032": [72.4, -0.4, 7.8],   "RAL 7034": [58.4, -0.4, 10.8],  "RAL 7035": [82.1, -1.0, 0.8],
-    "RAL 7036": [62.4, 0.8, 0.4],    "RAL 7038": [73.4, -0.8, 2.4],   "RAL 7040": [67.2, -1.4, -2.8],
-    "RAL 7044": [73.8, 0.4, 6.4],    "RAL 8014": [26.4, 9.8, 12.4],   "RAL 8016": [25.4, 17.4, 14.2],
-    "RAL 8017": [25.8, 7.6, 9.8],    "RAL 8022": [16.4, 0.8, 0.8],    "RAL 9001": [91.2, -0.8, 5.8],
-    "RAL 9003": [95.2, -0.6, 1.8],   "RAL 9005": [5.1, 0.1, -0.5],    "RAL 9006": [68.4, -0.8, 0.4],
-    "RAL 9010": [93.8, 0.2, 5.1],    "RAL 9011": [16.4, -0.4, -0.8],  "RAL 9016": [96.1, -0.2, 1.1],
-    "RAL 9017": [16.8, 0.2, -0.2]
+  // КАТАЛОГИ ЦВЕТОВ (Код, Название, L, a, b)
+  const CATALOGS = {
+    ral_classic: [
+      {code:"RAL 1000", name:"Green beige", L:76.5, a:1.2, b:28.1},
+      {code:"RAL 1013", name:"Oyster white", L:86.8, a:0.4, b:10.8},
+      {code:"RAL 1015", name:"Light ivory", L:84.4, a:2.8, b:16.9},
+      {code:"RAL 1019", name:"Grey beige", L:64.2, a:3.8, b:15.4},
+      {code:"RAL 3000", name:"Flame red", L:45.2, a:50.1, b:37.4},
+      {code:"RAL 3015", name:"Light pink", L:69.8, a:24.1, b:11.8},
+      {code:"RAL 3020", name:"Traffic red", L:46.9, a:59.8, b:44.5},
+      {code:"RAL 3028", name:"Pure red", L:45.8, a:62.4, b:43.1},
+      {code:"RAL 5002", name:"Ultramarine", L:24.1, a:13.5, b:-44.8},
+      {code:"RAL 5003", name:"Sapphire blue", L:22.4, a:0.8, b:-24.1},
+      {code:"RAL 6016", name:"Turquoise green", L:40.1, a:-36.4, b:8.4},
+      {code:"RAL 7004", name:"Signal grey", L:65.4, a:-0.4, b:-0.8},
+      {code:"RAL 7016", name:"Anthracite grey", L:29.3, a:-0.6, b:-3.7},
+      {code:"RAL 7024", name:"Graphite grey", L:33.7, a:-0.7, b:-2.9},
+      {code:"RAL 7035", name:"Light grey", L:82.1, a:-1.0, b:0.8},
+      {code:"RAL 7040", name:"Window grey", L:67.2, a:-1.4, b:-2.8},
+      {code:"RAL 8017", name:"Chocolate brown", L:25.8, a:7.6, b:9.8},
+      {code:"RAL 9003", name:"Signal white", L:95.2, a:-0.6, b:1.8},
+      {code:"RAL 9005", name:"Jet black", L:5.1, a:0.1, b:-0.5},
+      {code:"RAL 9006", name:"White aluminium", L:68.4, a:-0.8, b:0.4},
+      {code:"RAL 9010", name:"Pure white", L:93.8, a:0.2, b:5.1}
+    ],
+    ral_design: [
+      {code:"RAL 000 15 00", name:"Graphite black", L:15.0, a:0.0, b:0.0},
+      {code:"RAL 000 85 00", name:"Signal light grey", L:85.0, a:0.0, b:0.0},
+      {code:"RAL 080 80 60", name:"Sun gold", L:80.0, a:18.5, b:57.1},
+      {code:"RAL 120 70 40", name:"Spring leaf", L:70.0, a:-34.6, b:20.0},
+      {code:"RAL 160 50 35", name:"Mint shade", L:50.0, a:-32.8, b:11.9},
+      {code:"RAL 260 40 45", name:"Ocean deep", L:40.0, a:7.8, b:-44.3},
+      {code:"RAL 350 40 40", name:"Carmine purple", L:40.0, a:38.6, b:10.3}
+    ],
+    ncs: [
+      {code:"S 0500-N", name:"Neutral White", L:95.0, a:0.0, b:0.0},
+      {code:"S 9000-N", name:"Jet Black", L:10.0, a:0.0, b:0.0},
+      {code:"S 1080-Y90R", name:"Pure Red", L:48.0, a:58.0, b:42.0},
+      {code:"S 2060-R90B", name:"Deep Sky", L:42.0, a:-8.0, b:-46.0},
+      {code:"S 1515-Y20R", name:"Soft Sand", L:82.0, a:3.5, b:15.0},
+      {code:"S 2070-G10Y", name:"Fresh Green", L:62.0, a:-52.0, b:40.0},
+      {code:"S 4500-N", name:"Mid Grey", L:56.0, a:0.0, b:0.0}
+    ],
+    pantone: [
+      {code:"PANTONE 18-1662", name:"Flame Scarlet", L:47.2, a:61.2, b:40.5},
+      {code:"PANTONE 19-4052", name:"Classic Blue", L:30.5, a:2.8, b:-39.2},
+      {code:"PANTONE 17-5104", name:"Ultimate Gray", L:63.5, a:-1.2, b:1.5},
+      {code:"PANTONE 13-0647", name:"Illuminating", L:86.4, a:5.2, b:76.1},
+      {code:"PANTONE 19-0303", name:"Jet Black", L:12.4, a:0.2, b:-0.8},
+      {code:"PANTONE 11-0601", name:"Bright White", L:96.2, a:-0.5, b:1.2}
+    ]
   };
 
+  // МАТЕМАТИЧЕСКИЕ КОНВЕРТЕРЫ
   function labToRgb(L, a, b) {
     let y = (L + 16) / 116;
     let x = a / 500 + y;
@@ -437,21 +536,172 @@
     g = Math.min(255, Math.max(0, Math.round(gamma(g) * 255)));
     bl = Math.min(255, Math.max(0, Math.round(gamma(bl) * 255)));
 
-    return `rgb(${r}, ${g}, ${bl})`;
+    return [r, g, bl];
   }
 
-  function getRalColor(ralCode) {
-    if (ralRefLab[ralCode]) {
-      const [l, a, b] = ralRefLab[ralCode];
-      return labToRgb(l, a, b);
+  function rgbToHex(r, g, b) {
+    return "#" + [r, g, b].map(x => x.toString(16).padStart(2, '0')).join('');
+  }
+
+  function rgbToCmyk(r, g, b) {
+    let c = 1 - (r / 255);
+    let m = 1 - (g / 255);
+    let y = 1 - (b / 255);
+    let k = Math.min(c, Math.min(m, y));
+
+    if (k === 1) return {c: 0, m: 0, y: 0, k: 100};
+    c = Math.round(((c - k) / (1 - k)) * 100);
+    m = Math.round(((m - k) / (1 - k)) * 100);
+    y = Math.round(((y - k) / (1 - k)) * 100);
+    k = Math.round(k * 100);
+    return {c, m, y, k};
+  }
+
+  function labToLch(L, a, b) {
+    let C = Math.sqrt(a * a + b * b);
+    let h = Math.atan2(b, a) * (180 / Math.PI);
+    if (h < 0) h += 360;
+    return {L, C, h};
+  }
+
+  // CIEDE2000
+  function deltaE00(L1, a1, b1, L2, a2, b2) {
+    const rad = Math.PI / 180;
+    let avgL = (L1 + L2) / 2;
+    let c1 = Math.sqrt(a1 * a1 + b1 * b1);
+    let c2 = Math.sqrt(a2 * a2 + b2 * b2);
+    let avgC = (c1 + c2) / 2;
+    let G = 0.5 * (1 - Math.sqrt(Math.pow(avgC, 7) / (Math.pow(avgC, 7) + 6103515625)));
+
+    let a1p = (1 + G) * a1;
+    let a2p = (1 + G) * a2;
+    let c1p = Math.sqrt(a1p * a1p + b1 * b1);
+    let c2p = Math.sqrt(a2p * a2p + b2 * b2);
+    let avgCp = (c1p + c2p) / 2;
+
+    let h1p = Math.atan2(b1, a1p) * (180 / Math.PI); if (h1p < 0) h1p += 360;
+    let h2p = Math.atan2(b2, a2p) * (180 / Math.PI); if (h2p < 0) h2p += 360;
+
+    let dhp = h2p - h1p;
+    if (Math.abs(dhp) > 180) dhp += (h2p <= h1p ? 360 : -360);
+    let dHp = 2 * Math.sqrt(c1p * c2p) * Math.sin((dhp / 2) * rad);
+
+    let avghp = Math.abs(h1p - h2p) > 180 ? (h1p + h2p + 360) / 2 : (h1p + h2p) / 2;
+    let T = 1 - 0.17 * Math.cos((avghp - 30) * rad) + 0.24 * Math.cos(2 * avghp * rad) +
+            0.32 * Math.cos((3 * avghp + 6) * rad) - 0.20 * Math.cos((4 * avghp - 63) * rad);
+
+    let dLp = L2 - L1;
+    let dCp = c2p - c1p;
+    let sL = 1 + (0.015 * Math.pow(avgL - 50, 2)) / Math.sqrt(20 + Math.pow(avgL - 50, 2));
+    let sC = 1 + 0.045 * avgCp;
+    let sH = 1 + 0.015 * avgCp * T;
+    let rT = -2 * Math.sqrt(Math.pow(avgCp, 7) / (Math.pow(avgCp, 7) + 6103515625)) *
+             Math.sin(60 * Math.exp(-Math.pow((avghp - 275) / 25, 2)) * rad);
+
+    return Math.sqrt(Math.pow(dLp / sL, 2) + Math.pow(dCp / sC, 2) + Math.pow(dHp / sH, 2) + rT * (dCp / sC) * (dHp / sH));
+  }
+
+  // ПЕРЕКЛЮЧЕНИЕ КАТАЛОГА
+  function setCatalog(catalogKey) {
+    currentCatalog = catalogKey;
+    document.querySelectorAll('.catalog-tab').forEach(tab => tab.classList.remove('active'));
+    event.target.classList.add('active');
+
+    if (lastMeasuredLab) {
+      updateCatalogSearch(lastMeasuredLab[0], lastMeasuredLab[1], lastMeasuredLab[2]);
     }
-    return "#1e293b";
   }
 
+  // ОБНОВЛЕНИЕ ДАННЫХ
+  function updateCatalogSearch(L, a, b) {
+    const list = CATALOGS[currentCatalog];
+    let ranked = list.map(item => {
+      return {
+        ...item,
+        dE: deltaE00(L, a, b, item.L, item.a, item.b)
+      };
+    }).sort((x, y) => x.dE - y.dE);
+
+    const top1 = ranked[0];
+    const top2 = ranked[1];
+    const top3 = ranked[2];
+
+    document.getElementById('mainColorCode').innerText = top1.code;
+    document.getElementById('mainColorName').innerText = top1.name;
+    document.getElementById('deltaText').innerHTML = `${top1.dE.toFixed(2)} <span style="font-size:12px; font-weight:normal; color:var(--text-dim);">ΔE</span>`;
+
+    const pill = document.getElementById('qualityPill');
+    if (top1.dE < 2.0) {
+      pill.innerText = "ИДЕАЛЬНОЕ СОВПАДЕНИЕ"; pill.style.color = "#4ade80";
+    } else if (top1.dE < 4.0) {
+      pill.innerText = "ХОРОШЕЕ ПОПАДАНИЕ"; pill.style.color = "#facc15";
+    } else {
+      pill.innerText = "ПРИБЛИЗИТЕЛЬНЫЙ ОТТЕНОК"; pill.style.color = "#f87171";
+    }
+
+    if (top2) {
+      document.getElementById('alt1Code').innerText = `${top2.code} (${top2.name})`;
+      document.getElementById('alt1De').innerText = `ΔE ${top2.dE.toFixed(1)}`;
+      let [r2, g2, b2] = labToRgb(top2.L, top2.a, top2.b);
+      document.getElementById('alt1Swatch').style.backgroundColor = `rgb(${r2},${g2},${b2})`;
+    }
+    if (top3) {
+      document.getElementById('alt2Code').innerText = `${top3.code} (${top3.name})`;
+      document.getElementById('alt2De').innerText = `ΔE ${top3.dE.toFixed(1)}`;
+      let [r3, g3, b3] = labToRgb(top3.L, top3.a, top3.b);
+      document.getElementById('alt2Swatch').style.backgroundColor = `rgb(${r3},${g3},${b3})`;
+    }
+  }
+
+  // ОБРАБОТКА ДАННЫХ BLE СО СКАНЕРА
+  function handleTelemetry(event) {
+    const raw = new TextDecoder().decode(event.target.value);
+    try {
+      const data = JSON.parse(raw);
+      if (!data.lab) return;
+
+      const [L, a, b] = data.lab;
+      lastMeasuredLab = [L, a, b];
+
+      // 1. Модели цвета
+      const [r, g, bl] = labToRgb(L, a, b);
+      const hex = rgbToHex(r, g, bl);
+      const cmyk = rgbToCmyk(r, g, bl);
+      const lch = labToLch(L, a, b);
+
+      // 2. Отрисовка плашки
+      const swatch = document.getElementById('dominantSwatch');
+      swatch.style.backgroundColor = hex;
+      document.getElementById('hexVal').innerText = hex.toUpperCase();
+
+      const textColor = L > 65 ? '#07090e' : '#ffffff';
+      document.getElementById('mainColorCode').style.color = textColor;
+      document.getElementById('mainColorName').style.color = textColor;
+
+      // 3. Вывод численных параметров
+      document.getElementById('labText').innerText = `${L.toFixed(1)} ${a.toFixed(1)} ${b.toFixed(1)}`;
+      document.getElementById('rgbText').innerText = `${r} ${g} ${bl}`;
+      document.getElementById('lchText').innerText = `${lch.L.toFixed(0)} / ${lch.C.toFixed(0)} / ${lch.h.toFixed(0)}°`;
+
+      // 4. CMYK полосы
+      document.getElementById('cmykText').innerText = `C:${cmyk.c}% M:${cmyk.m}% Y:${cmyk.y}% K:${cmyk.k}%`;
+      document.getElementById('barC').style.width = cmyk.c + '%';
+      document.getElementById('barM').style.width = cmyk.m + '%';
+      document.getElementById('barY').style.width = cmyk.y + '%';
+      document.getElementById('barK').style.width = cmyk.k + '%';
+
+      // 5. Поиск по активному каталогу
+      updateCatalogSearch(L, a, b);
+
+    } catch (e) {
+      console.warn("JSON Error:", e);
+    }
+  }
+
+  // BLUETOOTH ПОДКЛЮЧЕНИЕ
   async function handlePowerToggle() {
     const sw = document.getElementById('powerBtn');
     const label = document.getElementById('switchStatus');
-
     sw.classList.add('connecting');
     label.innerText = "Поиск прибора...";
 
@@ -462,8 +712,8 @@
       });
 
       bleDevice.addEventListener('gattserverdisconnected', onDisconnected);
+      label.innerText = "Подключение...";
 
-      label.innerText = "Соединение...";
       const server = await bleDevice.gatt.connect();
       const service = await server.getPrimaryService(SERVICE_UUID);
       const txChar = await service.getCharacteristic(CHAR_TX_UUID);
@@ -471,81 +721,25 @@
       await txChar.startNotifications();
       txChar.addEventListener('characteristicvaluechanged', handleTelemetry);
 
-      // Переход на экран дашборда
       document.getElementById('connectScreen').style.display = 'none';
       document.getElementById('dashboardScreen').style.display = 'flex';
 
     } catch (err) {
       sw.classList.remove('connecting');
-      label.innerText = "Нажмите для старта";
+      label.innerText = "Включить прибор";
       console.log("Connect cancelled or failed", err);
     }
   }
 
   function disconnectDevice() {
-    if (bleDevice && bleDevice.gatt.connected) {
-      bleDevice.gatt.disconnect();
-    }
+    if (bleDevice && bleDevice.gatt.connected) bleDevice.gatt.disconnect();
   }
 
   function onDisconnected() {
     document.getElementById('dashboardScreen').style.display = 'none';
     document.getElementById('connectScreen').style.display = 'flex';
     document.getElementById('powerBtn').classList.remove('connecting');
-    document.getElementById('switchStatus').innerText = "Нажмите для старта";
-  }
-
-  function handleTelemetry(event) {
-    const raw = new TextDecoder().decode(event.target.value);
-    try {
-      const data = JSON.parse(raw);
-
-      document.getElementById('ralCode').innerText = data.ral;
-      document.getElementById('ralName').innerText = data.name;
-      document.getElementById('deVal').innerText = Number(data.dE).toFixed(2);
-      document.getElementById('confVal').innerText = data.confidence;
-
-      const pill = document.getElementById('qualityPill');
-      pill.innerText = data.quality;
-      if (data.dE < 2.0) {
-        pill.style.color = "#4ade80";
-      } else if (data.dE < 4.0) {
-        pill.style.color = "#facc15";
-      } else {
-        pill.style.color = "#f87171";
-      }
-
-      // Главный замер
-      if (data.lab) {
-        const rgb = labToRgb(data.lab[0], data.lab[1], data.lab[2]);
-        const swatch = document.getElementById('dominantSwatch');
-        swatch.style.backgroundColor = rgb;
-        document.getElementById('labValues').innerText = 
-          `L: ${Number(data.lab[0]).toFixed(1)}  a: ${Number(data.lab[1]).toFixed(1)}  b: ${Number(data.lab[2]).toFixed(1)}`;
-
-        // Авто-контраст шрифта под светлоту L
-        const textColor = data.lab[0] > 65 ? '#090d16' : '#ffffff';
-        document.getElementById('ralCode').style.color = textColor;
-        document.getElementById('ralName').style.color = textColor;
-      }
-
-      // Альтернативы
-      if (data.alternatives && data.alternatives.length >= 2) {
-        const a1 = data.alternatives[0];
-        const a2 = data.alternatives[1];
-
-        document.getElementById('alt1Code').innerText = a1.ral;
-        document.getElementById('alt1De').innerText = `ΔE ${Number(a1.dE).toFixed(1)}`;
-        document.getElementById('alt1Swatch').style.backgroundColor = getRalColor(a1.ral);
-
-        document.getElementById('alt2Code').innerText = a2.ral;
-        document.getElementById('alt2De').innerText = `ΔE ${Number(a2.dE).toFixed(1)}`;
-        document.getElementById('alt2Swatch').style.backgroundColor = getRalColor(a2.ral);
-      }
-
-    } catch (e) {
-      console.warn("Telemetry Parse Error", e);
-    }
+    document.getElementById('switchStatus').innerText = "Включить прибор";
   }
 </script>
 
