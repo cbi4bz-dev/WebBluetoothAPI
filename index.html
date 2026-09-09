@@ -2,19 +2,26 @@
 <html lang="ru">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, shrink-to-fit=no">
   <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="theme-color" content="#07090e">
+  <link rel="manifest" href="manifest.json">
   <title>Color Station Pro</title>
+  
+  <!-- Библиотека генерации PDF -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
   <style>
     :root {
       --bg: #07090e;
-      --card-bg: rgba(22, 27, 38, 0.7);
-      --card-border: rgba(255, 255, 255, 0.08);
+      --card-bg: rgba(22, 27, 38, 0.85);
+      --card-border: rgba(255, 255, 255, 0.1);
       --text: #f8fafc;
       --text-dim: #94a3b8;
-      --accent: #3b82f6;
-      --accent-glow: rgba(59, 130, 246, 0.4);
+      --accent: #2563eb;
+      --accent-glow: rgba(37, 99, 235, 0.4);
       --success: #10b981;
     }
     * {
@@ -24,58 +31,61 @@
       -webkit-tap-highlight-color: transparent;
       user-select: none;
     }
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", Inter, sans-serif;
+    html, body {
+      width: 100%;
+      min-height: 100%;
       background-color: var(--bg);
       color: var(--text);
-      min-height: 100vh;
-      min-height: 100dvh;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      font-size: 16px;
+    }
+    body {
       display: flex;
       flex-direction: column;
-      overflow-x: hidden;
-      padding: env(safe-area-inset-top) 16px env(safe-area-inset-bottom) 16px;
+      padding: 16px;
+      padding-top: max(16px, env(safe-area-inset-top));
+      padding-bottom: max(16px, env(safe-area-inset-bottom));
     }
 
     /* ЭКРАН 1: ВЫКЛЮЧАТЕЛЬ */
     #connectScreen {
-      flex: 1;
       display: flex;
       flex-direction: column;
-      justify-content: space-between;
+      justify-content: space-around;
       align-items: center;
-      padding: 40px 16px;
+      min-height: 80vh;
       text-align: center;
+      width: 100%;
     }
     .hero-text h1 {
-      font-size: 32px;
+      font-size: 2.2rem;
       font-weight: 800;
-      letter-spacing: -0.03em;
       margin-bottom: 8px;
       background: linear-gradient(180deg, #fff 0%, #94a3b8 100%);
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
     }
     .hero-text p {
-      font-size: 15px;
+      font-size: 1.1rem;
       color: var(--text-dim);
     }
     .power-switch {
-      width: 110px;
-      height: 190px;
+      width: 120px;
+      height: 200px;
       background: #111622;
-      border-radius: 55px;
+      border-radius: 60px;
       padding: 10px;
       box-shadow: 
         inset 0 4px 12px rgba(0,0,0,0.8),
-        0 0 0 1px rgba(255,255,255,0.06),
+        0 0 0 2px rgba(255,255,255,0.08),
         0 20px 40px rgba(0,0,0,0.6);
       cursor: pointer;
       position: relative;
-      transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+      margin: 20px auto;
     }
     .power-knob {
-      width: 90px;
-      height: 90px;
+      width: 100px;
+      height: 100px;
       background: linear-gradient(145deg, #1e2638, #151b27);
       border-radius: 50%;
       box-shadow: 0 8px 20px rgba(0,0,0,0.6), inset 0 1px 1px rgba(255,255,255,0.2);
@@ -85,12 +95,11 @@
       transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), background 0.3s;
     }
     .power-icon {
-      width: 32px;
-      height: 32px;
+      width: 40px;
+      height: 40px;
       stroke: var(--text-dim);
       stroke-width: 2.5;
       fill: none;
-      transition: stroke 0.3s;
     }
     .power-switch.connecting .power-knob {
       transform: translateY(80px);
@@ -99,86 +108,86 @@
     }
     .power-switch.connecting .power-icon {
       stroke: #fff;
-      filter: drop-shadow(0 0 8px rgba(255,255,255,0.8));
     }
     .switch-label {
-      font-size: 14px;
-      font-weight: 600;
+      font-size: 1.1rem;
+      font-weight: 700;
       color: var(--text-dim);
       text-transform: uppercase;
       letter-spacing: 0.1em;
-      margin-top: 16px;
     }
 
     /* ЭКРАН 2: ДАШБОРД */
     #dashboardScreen {
-      flex: 1;
       display: none;
       flex-direction: column;
-      gap: 12px;
-      padding-top: 8px;
+      gap: 16px;
+      width: 100%;
     }
     .top-nav {
       display: flex;
       justify-content: space-between;
       align-items: center;
+      width: 100%;
     }
     .conn-status {
       display: flex;
       align-items: center;
       gap: 8px;
-      font-size: 13px;
+      font-size: 0.95rem;
       font-weight: 600;
       color: var(--success);
       background: rgba(16, 185, 129, 0.1);
-      padding: 6px 12px;
+      padding: 8px 16px;
       border-radius: 20px;
       border: 1px solid rgba(16, 185, 129, 0.2);
     }
     .pulse-dot {
-      width: 7px;
-      height: 7px;
+      width: 8px;
+      height: 8px;
       border-radius: 50%;
       background: var(--success);
       box-shadow: 0 0 10px var(--success);
     }
     .top-actions {
       display: flex;
-      gap: 8px;
+      gap: 6px;
     }
     .btn-action {
-      background: rgba(255,255,255,0.06);
+      background: rgba(255,255,255,0.08);
       border: 1px solid var(--card-border);
-      color: var(--text-dim);
-      padding: 6px 14px;
+      color: var(--text);
+      padding: 8px 12px;
       border-radius: 20px;
-      font-size: 12px;
+      font-size: 0.85rem;
       font-weight: 600;
       cursor: pointer;
-      transition: background 0.2s;
     }
-    .btn-action:active { background: rgba(255,255,255,0.15); }
+    .btn-action.primary {
+      background: var(--accent);
+      border-color: var(--accent);
+    }
 
-    /* ПЕРЕКЛЮЧАТЕЛЬ ПАЛИТР */
+    /* ВЫБОР ПАЛИТРЫ */
     .catalog-selector {
       display: grid;
       grid-template-columns: repeat(4, 1fr);
       background: #111622;
       border: 1px solid var(--card-border);
       border-radius: 14px;
-      padding: 3px;
-      gap: 3px;
+      padding: 4px;
+      gap: 4px;
+      width: 100%;
     }
     .catalog-tab {
       background: transparent;
       border: none;
       color: var(--text-dim);
-      padding: 8px 0;
+      padding: 10px 0;
       border-radius: 10px;
-      font-size: 11px;
+      font-size: 0.85rem;
       font-weight: 700;
       cursor: pointer;
-      transition: all 0.2s;
     }
     .catalog-tab.active {
       background: var(--accent);
@@ -186,63 +195,58 @@
       box-shadow: 0 2px 8px var(--accent-glow);
     }
 
-    /* ДОМИНИРУЮЩАЯ ПЛАШКА */
+    /* ГЛАВНАЯ ЦВЕТНАЯ ПЛАШКА */
     .dominant-swatch {
+      width: 100%;
+      min-height: 220px;
       border-radius: 24px;
       padding: 20px;
       display: flex;
       flex-direction: column;
       justify-content: space-between;
       background: #161b26;
-      border: 1px solid rgba(255,255,255,0.12);
-      box-shadow: 0 16px 40px rgba(0,0,0,0.5);
-      position: relative;
-      transition: background-color 0.4s ease;
-      min-height: 190px;
+      border: 1px solid rgba(255,255,255,0.15);
+      box-shadow: 0 16px 30px rgba(0,0,0,0.5);
+      transition: background-color 0.3s ease;
     }
     .swatch-header {
       display: flex;
       justify-content: space-between;
       align-items: flex-start;
+      gap: 10px;
     }
     .quality-pill {
-      font-size: 11px;
+      font-size: 0.8rem;
       font-weight: 800;
       text-transform: uppercase;
-      letter-spacing: 0.08em;
+      letter-spacing: 0.05em;
       padding: 6px 12px;
-      border-radius: 30px;
-      background: rgba(0, 0, 0, 0.6);
-      backdrop-filter: blur(16px);
-      -webkit-backdrop-filter: blur(16px);
+      border-radius: 20px;
+      background: rgba(0, 0, 0, 0.65);
+      backdrop-filter: blur(10px);
       border: 1px solid rgba(255, 255, 255, 0.15);
     }
     .hex-capsule {
-      font-family: ui-monospace, SFMono-Regular, monospace;
-      font-size: 14px;
+      font-family: monospace;
+      font-size: 1.1rem;
       font-weight: 700;
       padding: 6px 12px;
       border-radius: 12px;
-      background: rgba(0, 0, 0, 0.6);
-      backdrop-filter: blur(16px);
-      -webkit-backdrop-filter: blur(16px);
+      background: rgba(0, 0, 0, 0.65);
+      backdrop-filter: blur(10px);
       border: 1px solid rgba(255, 255, 255, 0.15);
       color: #fff;
     }
-    .swatch-body {
-      display: flex;
-      flex-direction: column;
-    }
     .main-code {
-      font-size: 42px;
+      font-size: 3rem;
       font-weight: 900;
       letter-spacing: -0.04em;
-      line-height: 1;
+      line-height: 1.05;
     }
     .main-name {
-      font-size: 17px;
+      font-size: 1.2rem;
       font-weight: 600;
-      margin-top: 4px;
+      margin-top: 6px;
       opacity: 0.9;
     }
 
@@ -250,55 +254,54 @@
     .color-models-grid {
       display: grid;
       grid-template-columns: 1fr 1fr;
-      gap: 8px;
+      gap: 10px;
+      width: 100%;
     }
     .model-card {
       background: var(--card-bg);
-      backdrop-filter: blur(20px);
-      -webkit-backdrop-filter: blur(20px);
       border: 1px solid var(--card-border);
       border-radius: 16px;
-      padding: 10px 14px;
+      padding: 12px 14px;
     }
     .model-title {
-      font-size: 10px;
+      font-size: 0.75rem;
       font-weight: 700;
       color: var(--text-dim);
       text-transform: uppercase;
       letter-spacing: 0.05em;
-      margin-bottom: 2px;
+      margin-bottom: 4px;
     }
     .model-val {
-      font-family: ui-monospace, monospace;
-      font-size: 14px;
+      font-family: monospace;
+      font-size: 1.05rem;
       font-weight: 700;
       color: #fff;
     }
     .cmyk-bars {
       display: grid;
       grid-template-columns: repeat(4, 1fr);
-      gap: 4px;
-      margin-top: 6px;
+      gap: 6px;
+      margin-top: 8px;
     }
     .cmyk-bar-wrap {
       display: flex;
       flex-direction: column;
-      gap: 2px;
-      font-size: 9px;
+      gap: 4px;
+      font-size: 0.75rem;
       font-weight: 700;
       color: var(--text-dim);
       text-align: center;
     }
     .cmyk-track {
-      height: 4px;
+      height: 6px;
       background: rgba(255,255,255,0.1);
-      border-radius: 2px;
+      border-radius: 3px;
       overflow: hidden;
     }
     .cmyk-fill {
       height: 100%;
       width: 0%;
-      border-radius: 2px;
+      border-radius: 3px;
       transition: width 0.3s ease;
     }
 
@@ -306,50 +309,51 @@
     .alts-wrapper {
       display: flex;
       flex-direction: column;
-      gap: 6px;
+      gap: 8px;
+      width: 100%;
     }
     .alts-title {
-      font-size: 10px;
+      font-size: 0.8rem;
       font-weight: 700;
       color: var(--text-dim);
       text-transform: uppercase;
-      letter-spacing: 0.06em;
-      padding-left: 2px;
+      letter-spacing: 0.05em;
+      padding-left: 4px;
     }
     .alt-tile {
       display: flex;
       align-items: center;
       background: var(--card-bg);
       border: 1px solid var(--card-border);
-      border-radius: 14px;
-      padding: 8px 12px;
+      border-radius: 16px;
+      padding: 10px 14px;
       gap: 12px;
+      width: 100%;
     }
     .alt-capsule {
-      width: 38px;
-      height: 38px;
-      border-radius: 10px;
+      width: 48px;
+      height: 48px;
+      border-radius: 12px;
       border: 1px solid rgba(255,255,255,0.15);
       flex-shrink: 0;
     }
     .alt-name {
-      font-size: 14px;
+      font-size: 1.05rem;
       font-weight: 800;
-      letter-spacing: -0.01em;
     }
     .alt-de-tag {
-      font-size: 13px;
+      font-size: 0.95rem;
       font-weight: 700;
       color: var(--text-dim);
-      background: rgba(255, 255, 255, 0.05);
-      padding: 4px 8px;
+      background: rgba(255, 255, 255, 0.08);
+      padding: 6px 10px;
       border-radius: 8px;
     }
   </style>
 </head>
 <body>
 
-  <!-- ЭКРАН 1: ПЕРЕКЛЮЧАТЕЛЬ -->
+  <!-- ЭКРАН 1: ВЫКЛЮЧАТЕЛЬ -->
   <section id="connectScreen">
     <div class="hero-text">
       <h1>Color Station Pro</h1>
@@ -367,7 +371,7 @@
       <div id="switchStatus" class="switch-label">Включить прибор</div>
     </div>
 
-    <div style="font-size: 12px; color: rgba(255,255,255,0.2);">BLE CIE D65/10° • Multi-Catalog</div>
+    <div style="font-size: 0.85rem; color: rgba(255,255,255,0.3);">BLE CIE D65/10° • PWA Certified</div>
   </section>
 
   <!-- ЭКРАН 2: ДАШБОРД -->
@@ -378,8 +382,9 @@
         <span>Онлайн</span>
       </div>
       <div class="top-actions">
-        <button id="btnCopy" class="btn-action" onclick="copyReport()">Экспорт</button>
-        <button class="btn-action" onclick="disconnectDevice()">Выключить</button>
+        <button class="btn-action primary" onclick="exportToPDF()">PDF</button>
+        <button id="btnCopy" class="btn-action" onclick="copyReport()">Текст</button>
+        <button class="btn-action" onclick="disconnectDevice()">Выкл</button>
       </div>
     </div>
 
@@ -403,13 +408,12 @@
       </div>
     </div>
 
-    <!-- СЕТКА МОДЕЛЕЙ (CMYK / Lab / RGB / LCh) -->
+    <!-- СЕТКА МОДЕЛЕЙ -->
     <div class="color-models-grid">
-      <!-- CMYK -->
       <div class="model-card" style="grid-column: span 2;">
         <div style="display: flex; justify-content: space-between; align-items: baseline;">
           <div class="model-title">CMYK (Печатный стандарт)</div>
-          <div id="cmykText" style="font-size: 13px; font-weight: 700; color: var(--accent);">C:0 M:0 Y:0 K:0</div>
+          <div id="cmykText" style="font-size: 0.95rem; font-weight: 700; color: #60a5fa;">C:0 M:0 Y:0 K:0</div>
         </div>
         <div class="cmyk-bars">
           <div class="cmyk-bar-wrap"><span>C</span><div class="cmyk-track"><div id="barC" class="cmyk-fill" style="background:#06b6d4;"></div></div></div>
@@ -419,28 +423,24 @@
         </div>
       </div>
 
-      <!-- CIE Lab -->
       <div class="model-card">
         <div class="model-title">CIE L*a*b*</div>
         <div id="labText" class="model-val">-- -- --</div>
       </div>
 
-      <!-- sRGB -->
       <div class="model-card">
         <div class="model-title">sRGB (Экран)</div>
         <div id="rgbText" class="model-val">-- -- --</div>
       </div>
 
-      <!-- LCh -->
       <div class="model-card">
         <div class="model-title">CIE L*C*h°</div>
         <div id="lchText" class="model-val">-- -- --</div>
       </div>
 
-      <!-- Погрешность поиска -->
       <div class="model-card">
         <div class="model-title">ΔE00 / Совпадение</div>
-        <div id="deltaText" class="model-val">0.00 <span style="font-size:12px; font-weight:normal; color:var(--text-dim);">ΔE</span></div>
+        <div id="deltaText" class="model-val">0.00 <span style="font-size:0.8rem; font-weight:normal; color:var(--text-dim);">ΔE</span></div>
       </div>
     </div>
 
@@ -465,6 +465,13 @@
   </section>
 
 <script>
+  // РЕГИСТРАЦИЯ PWA SERVICE WORKER
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('./sw.js').catch((err) => console.log('SW error:', err));
+    });
+  }
+
   const SERVICE_UUID = "6e400001-b5a3-f393-e0a9-e50e24dcca9e";
   const CHAR_TX_UUID = "6e400003-b5a3-f393-e0a9-e50e24dcca9e";
 
@@ -473,7 +480,6 @@
   let lastMeasuredLab = null;
   let lastReportData = null;
 
-  // ПОЛНАЯ БАЗА RAL CLASSIC (213 цветов) + ДОП. КАТАЛОГИ
   const CATALOGS = {
     ral_classic: [
       {code:"RAL 1000", name:"Green beige", L:76.5, a:1.2, b:28.1},
@@ -719,7 +725,6 @@
     ]
   };
 
-  // МАТЕМАТИКА КОЛОРИМЕТРИИ
   function labToRgb(L, a, b) {
     let y = (L + 16) / 116;
     let x = a / 500 + y;
@@ -828,7 +833,7 @@
 
     document.getElementById('mainColorCode').innerText = top1.code;
     document.getElementById('mainColorName').innerText = top1.name;
-    document.getElementById('deltaText').innerHTML = `${top1.dE.toFixed(2)} <span style="font-size:12px; font-weight:normal; color:var(--text-dim);">ΔE</span>`;
+    document.getElementById('deltaText').innerHTML = `${top1.dE.toFixed(2)} <span style="font-size:0.8rem; font-weight:normal; color:var(--text-dim);">ΔE</span>`;
 
     const pill = document.getElementById('qualityPill');
     if (top1.dE < 2.0) {
@@ -899,6 +904,97 @@
     }
   }
 
+  // ЭКСПОРТ В СТАНДАРТНЫЙ PDF ПАСПОРТ
+  function exportToPDF() {
+    if (!lastMeasuredLab || !lastReportData) {
+      alert("Сначала выполните замер цвета!");
+      return;
+    }
+
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF({
+      orientation: "portrait",
+      unit: "mm",
+      format: "a4"
+    });
+
+    const [L, a, b] = lastMeasuredLab;
+    const [r, g, bl] = labToRgb(L, a, b);
+    const hex = rgbToHex(r, g, bl).toUpperCase();
+    const cmyk = rgbToCmyk(r, g, bl);
+    const lch = labToLch(L, a, b);
+
+    // Заголовок отчёта
+    doc.setFillColor(15, 23, 42);
+    doc.rect(0, 0, 210, 40, 'F');
+    doc.setTextColor(255, 255, 255);
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(22);
+    doc.text("COLOR MEASUREMENT PASSPORT", 20, 22);
+    doc.setFontSize(10);
+    doc.setFont("helvetica", "normal");
+    doc.setTextColor(148, 163, 184);
+    doc.text(`Generated: ${new Date().toLocaleString()} | Instrument: RAL-Scanner-PRO`, 20, 32);
+
+    // Цветная плашка
+    doc.setFillColor(r, g, bl);
+    doc.roundedRect(20, 50, 170, 45, 4, 4, 'F');
+    doc.setDrawColor(200, 200, 200);
+    doc.roundedRect(20, 50, 170, 45, 4, 4, 'D');
+
+    // Текст поверх плашки (автоконтраст)
+    if (L > 65) {
+      doc.setTextColor(15, 23, 42);
+    } else {
+      doc.setTextColor(255, 255, 255);
+    }
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(26);
+    doc.text(lastReportData.code, 28, 75);
+    doc.setFontSize(14);
+    doc.setFont("helvetica", "normal");
+    doc.text(lastReportData.name, 28, 85);
+
+    // Блок параметров
+    doc.setTextColor(15, 23, 42);
+    doc.setFontSize(14);
+    doc.setFont("helvetica", "bold");
+    doc.text("Chromatic Coordinates", 20, 110);
+    doc.setDrawColor(226, 232, 240);
+    doc.line(20, 114, 190, 114);
+
+    doc.setFontSize(11);
+    doc.setFont("helvetica", "normal");
+    doc.setTextColor(51, 65, 85);
+
+    const rows = [
+      ["Color System Catalog:", `${lastReportData.catalog}`],
+      ["Color Difference (Delta E00):", `${lastReportData.dE}`],
+      ["CIE L*a*b*:", `${L.toFixed(2)},  ${a.toFixed(2)},  ${b.toFixed(2)}`],
+      ["CIE L*C*h:", `${lch.L.toFixed(1)},  ${lch.C.toFixed(1)},  ${lch.h.toFixed(1)} deg`],
+      ["HEX / HTML:", `${hex}`],
+      ["sRGB (D65):", `R:${r},  G:${g},  B:${bl}`],
+      ["CMYK (Print Approximation):", `C:${cmyk.c}%, M:${cmyk.m}%, Y:${cmyk.y}%, K:${cmyk.k}%`]
+    ];
+
+    let y = 125;
+    rows.forEach(([label, value]) => {
+      doc.setFont("helvetica", "bold");
+      doc.text(label, 20, y);
+      doc.setFont("helvetica", "normal");
+      doc.text(value, 95, y);
+      y += 10;
+    });
+
+    // Подвал
+    doc.setFontSize(9);
+    doc.setTextColor(148, 163, 184);
+    doc.text("Certified standard: CIE D65 / 10 deg Observer. Calculation model: CIEDE2000.", 20, 280);
+
+    // Скачивание
+    doc.save(`Color_Report_${lastReportData.code.replace(/\s+/g, '_')}.pdf`);
+  }
+
   function copyReport() {
     if (!lastMeasuredLab || !lastReportData) {
       alert("Сначала выполните измерение!");
@@ -922,7 +1018,7 @@ CMYK: C:${cmyk.c}% M:${cmyk.m}% Y:${cmyk.y}% K:${cmyk.k}%
     navigator.clipboard.writeText(report).then(() => {
       const btn = document.getElementById('btnCopy');
       btn.innerText = "Скопировано!";
-      setTimeout(() => btn.innerText = "Экспорт", 2000);
+      setTimeout(() => btn.innerText = "Текст", 2000);
     });
   }
 
