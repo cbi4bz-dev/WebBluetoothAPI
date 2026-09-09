@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>RAL Colorimeter BLE</title>
+  <style>
+    :root {
+      --bg: #0f172a;
+      --card: #1e293b;
+      --text: #f8fafc;
+      --accent: #2563eb;
+    }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      margin: 0;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    .app-card {
+      width: 100%;
+      max-width: 420px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    button {
+      background: var(--accent);
+      color: white;
+      border: none;
+      padding: 14px;
+      border-radius: 8px;
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .status-bar {
+      font-size: 13px;
+      color: #94a3b8;
+      text-align: center;
+    }
+    .panel {
+      background: var(--card);
+      border-radius: 12px;
+      padding: 16px;
+      border: 1px solid #334155;
+    }
+    .color-swatch {
+      height: 120px;
+      border-radius: 8px;
+      border: 1px solid rgba(255,255,255,0.2);
+      margin-bottom: 12px;
+      display: flex;
+      align-items: flex-end;
+      padding: 8px 12px;
+      box-sizing: border-box;
+      font-size: 11px;
+      font-family: monospace;
+      color: #fff;
+      text-shadow: 0 1px 2px rgba(0,0,0,0.8);
+      background-color: #334155;
+      transition: background-color 0.3s ease;
+    }
+    .title-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 6px;
+    }
+    .ral-code {
+      font-size: 26px;
+      font-weight: 700;
+    }
+    .badge {
+      padding: 4px 8px;
+      border-radius: 6px;
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+    }
+    .alt-row {
+      display: flex;
+      justify-content: space-between;
+      padding: 6px 0;
+      border-bottom: 1px solid #334155;
+      font-size: 13px;
+    }
+    .alt-row:last-child { border: none; }
+  </style>
+</head>
+<body>
+
+<div class="app-card">
+  <button id="connectBtn" onclick="toggleConnect()">Подключить сканер</button>
+  <div id="status" class="status-bar">Статус: Отключено</div>
+
+  <!-- Панель результата -->
+  <div class="panel" id="resultPanel" style="display: none;">
+    <div id="swatch" class="color-swatch">Lab: ---, ---, ---</div>
+    
+    <div class="title-row">
+      <div>
+        <div id="ralCode" class="ral-code">RAL ----</div>
+        <div id="ralName" style="color: #94a3b8; font-size: 14px;">---</div>
+      </div>
+      <div id="badge" class="badge">---</div>
+    </div>
+
+    <div style="font-size: 13px; margin-top: 10px; color: #cbd5e1;">
+      Погрешность: <strong id="deVal">0.00</strong> ΔE00 &nbsp;|&nbsp;
+      Точность: <strong id="confVal">0</strong>%
+    </div>
+  </div>
+
+  <!-- Ближайшие кандидаты -->
+  <div class="panel" id="altPanel" style="display: none;">
+    <div style="font-size: 12px; color: #94a3b8; text-transform: uppercase; margin-bottom: 8px;">
+      Ближайшие совпадения
+    </div>
+    <div class="alt-row">
+      <span id="alt1">2. RAL ----</span>
+      <span id="alt1De">ΔE --</span>
+    </div>
+    <div class="alt-row">
+      <span id="alt2">3. RAL ----</span>
+      <span id="alt2De">ΔE --</span>
+    </div>
+  </div>
+</div>
+
+<script>
+  const SERVICE_UUID = "6e400001-b5a3-f393-e0a9-e50e24dcca9e";
+  const CHAR_TX_UUID = "6e400003-b5a3-f393-e0a9-e50e24dcca9e";
+
+  let bleDevice = null;
+  let gattServer = null;
+
+  // Точный конвертер CIE Lab (D65) в экранный sRGB
+  function labToRgb(L, a, b) {
+    let y = (L + 16) / 116;
+    let x = a / 500 + y;
+    let z = y - b / 200;
+
+    const fn = (t) => t > 0.206893 ? Math.pow(t, 3) : (t - 16/116) / 7.787;
+    x = 0.95047 * fn(x);
+    y = 1.00000 * fn(y);
+    z = 1.08883 * fn(z);
+
+    let r = x *  3.2406 + y * -1.5372 + z * -0.4986;
+    let g = x * -0.9689 + y *  1.8758 + z *  0.0415;
+    let bl = x *  0.0557 + y * -0.2040 + z *  1.0570;
+
+    const gamma = (c) => c <= 0.0031308 ? 12.92 * c : 1.055 * Math.pow(c, 1/2.4) - 0.055;
+    r = Math.min(255, Math.max(0, Math.round(gamma(r) * 255)));
+    g = Math.min(255, Math.max(0, Math.round(gamma(g) * 255)));
+    bl = Math.min(255, Math.max(0, Math.round(gamma(bl) * 255)));
+
+    return `rgb(${r}, ${g}, ${bl})`;
+  }
+
+  async function toggleConnect() {
+    if (bleDevice && bleDevice.gatt.connected) {
+      bleDevice.gatt.disconnect();
+      return;
+    }
+
+    try {
+      document.getElementById('status').innerText = "Статус: Поиск устройства...";
+      
+      bleDevice = await navigator.bluetooth.requestDevice({
+        filters: [{ name: "RAL-Scanner-PRO" }],
+        optionalServices: [SERVICE_UUID]
+      });
+
+      bleDevice.addEventListener('gattserverdisconnected', onDisconnected);
+
+      document.getElementById('status').innerText = "Статус: Подключение...";
+      gattServer = await bleDevice.gatt.connect();
+
+      const service = await gattServer.getPrimaryService(SERVICE_UUID);
+      const txChar = await service.getCharacteristic(CHAR_TX_UUID);
+
+      await txChar.startNotifications();
+      txChar.addEventListener('characteristicvaluechanged', handleTelemetry);
+
+      document.getElementById('status').innerText = "Статус: Подключено к сканеру";
+      document.getElementById('connectBtn').innerText = "Отключить";
+      document.getElementById('connectBtn').style.background = "#dc2626";
+      document.getElementById('resultPanel').style.display = "block";
+      document.getElementById('altPanel').style.display = "block";
+
+    } catch (error) {
+      document.getElementById('status').innerText = "Ошибка: " + error.message;
+    }
+  }
+
+  function onDisconnected() {
+    document.getElementById('status').innerText = "Статус: Отключено";
+    document.getElementById('connectBtn').innerText = "Подключить сканер";
+    document.getElementById('connectBtn').style.background = "#2563eb";
+    document.getElementById('resultPanel').style.display = "none";
+    document.getElementById('altPanel').style.display = "none";
+  }
+
+  function handleTelemetry(event) {
+    const raw = new TextDecoder().decode(event.target.value);
+    try {
+      const data = JSON.parse(raw);
+
+      document.getElementById('ralCode').innerText = data.ral;
+      document.getElementById('ralName').innerText = data.name;
+      document.getElementById('deVal').innerText = data.dE.toFixed(2);
+      document.getElementById('confVal').innerText = data.confidence;
+
+      const badge = document.getElementById('badge');
+      badge.innerText = data.quality;
+      if (data.dE < 2.0) {
+        badge.style.background = "#dcfce7"; badge.style.color = "#166534";
+      } else if (data.dE < 4.0) {
+        badge.style.background = "#fef3c7"; badge.style.color = "#92400e";
+      } else {
+        badge.style.background = "#fee2e2"; badge.style.color = "#991b1b";
+      }
+
+      if (data.lab) {
+        const rgb = labToRgb(data.lab[0], data.lab[1], data.lab[2]);
+        const swatch = document.getElementById('swatch');
+        swatch.style.backgroundColor = rgb;
+        swatch.innerText = `Lab: ${data.lab[0].toFixed(1)}, ${data.lab[1].toFixed(1)}, ${data.lab[2].toFixed(1)}`;
+      }
+
+      if (data.alternatives && data.alternatives.length >= 2) {
+        document.getElementById('alt1').innerText = "2. " + data.alternatives[0].ral;
+        document.getElementById('alt1De').innerText = "ΔE " + data.alternatives[0].dE.toFixed(1);
+        document.getElementById('alt2').innerText = "3. " + data.alternatives[1].ral;
+        document.getElementById('alt2De').innerText = "ΔE " + data.alternatives[1].dE.toFixed(1);
+      }
+
+    } catch (e) {
+      console.warn("Ошибка формата данных:", e, raw);
+    }
+  }
+</script>
+
+</body>
+</html>
