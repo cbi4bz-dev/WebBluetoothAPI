@@ -2,82 +2,112 @@
 <html lang="ru">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>RAL Colorimeter BLE</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>RAL Colorimeter PRO</title>
   <style>
     :root {
-      --bg: #0f172a;
-      --card: #1e293b;
+      --bg: #0b0f19;
+      --card-bg: #161f30;
+      --card-border: #233048;
       --text: #f8fafc;
+      --text-muted: #94a3b8;
       --accent: #2563eb;
-      --border: #334155;
     }
-    * { box-sizing: border-box; }
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-tap-highlight-color: transparent;
+    }
     body {
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
       background: var(--bg);
       color: var(--text);
-      margin: 0;
-      padding: 16px;
+      padding: 12px;
       display: flex;
       flex-direction: column;
       align-items: center;
+      min-height: 100vh;
     }
-    .app-card {
+    .container {
       width: 100%;
-      max-width: 420px;
+      max-width: 400px;
       display: flex;
       flex-direction: column;
       gap: 12px;
     }
-    button {
+
+    /* Верхняя панель управления */
+    .header-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 12px;
+      padding: 10px 14px;
+    }
+    .status-text {
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--text-muted);
+    }
+    .btn-connect {
       background: var(--accent);
       color: white;
       border: none;
-      padding: 14px;
+      padding: 8px 16px;
       border-radius: 8px;
-      font-size: 15px;
+      font-size: 13px;
       font-weight: 600;
       cursor: pointer;
-      transition: background 0.2s;
     }
-    button:active { filter: brightness(0.9); }
-    .status-bar {
-      font-size: 13px;
-      color: #94a3b8;
-      text-align: center;
+
+    /* Главная карточка */
+    .card {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 16px;
+      padding: 14px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.3);
     }
-    .panel {
-      background: var(--card);
+    .main-swatch {
+      width: 100%;
+      height: 140px;
       border-radius: 12px;
-      padding: 16px;
-      border: 1px solid var(--border);
-    }
-    .color-swatch {
-      height: 130px;
-      border-radius: 8px;
-      border: 1px solid rgba(255,255,255,0.2);
-      margin-bottom: 12px;
+      border: 1px solid rgba(255,255,255,0.15);
+      position: relative;
       display: flex;
-      align-items: flex-end;
-      padding: 10px 12px;
-      font-size: 11px;
-      font-family: monospace;
-      color: #fff;
-      text-shadow: 0 1px 2px rgba(0,0,0,0.8);
-      background-color: #334155;
-      transition: background-color 0.3s ease;
+      flex-direction: column;
+      justify-content: flex-end;
+      padding: 10px;
+      margin-bottom: 12px;
+      box-shadow: inset 0 0 40px rgba(0,0,0,0.25);
+      transition: background-color 0.25s ease;
     }
-    .title-row {
+    .swatch-lab {
+      font-family: ui-monospace, SFMono-Regular, monospace;
+      font-size: 11px;
+      color: rgba(255,255,255,0.9);
+      text-shadow: 0 1px 3px rgba(0,0,0,0.85);
+    }
+
+    .main-info {
       display: flex;
       justify-content: space-between;
       align-items: flex-start;
-      margin-bottom: 6px;
+      margin-bottom: 8px;
     }
     .ral-code {
-      font-size: 26px;
-      font-weight: 700;
+      font-size: 28px;
+      font-weight: 800;
+      letter-spacing: -0.02em;
       line-height: 1.1;
+    }
+    .ral-name {
+      font-size: 14px;
+      color: var(--text-muted);
+      margin-top: 2px;
     }
     .badge {
       padding: 4px 8px;
@@ -85,52 +115,110 @@
       font-size: 11px;
       font-weight: 700;
       text-transform: uppercase;
-      white-space: nowrap;
+      letter-spacing: 0.03em;
     }
-    .alt-row {
+
+    .metrics-row {
       display: flex;
       justify-content: space-between;
-      padding: 8px 0;
-      border-bottom: 1px solid var(--border);
+      background: rgba(0,0,0,0.25);
+      border-radius: 8px;
+      padding: 8px 12px;
       font-size: 13px;
     }
-    .alt-row:last-child { border: none; }
+    .metrics-row strong {
+      color: #60a5fa;
+    }
+
+    /* Секция альтернативных цветов */
+    .alt-title {
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 8px;
+    }
+    .alt-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 8px 0;
+      border-bottom: 1px solid var(--card-border);
+    }
+    .alt-item:last-child {
+      border-bottom: none;
+      padding-bottom: 0;
+    }
+    .mini-swatch {
+      width: 44px;
+      height: 44px;
+      border-radius: 8px;
+      border: 1px solid rgba(255,255,255,0.2);
+      flex-shrink: 0;
+      box-shadow: inset 0 0 10px rgba(0,0,0,0.2);
+    }
+    .alt-details {
+      flex: 1;
+    }
+    .alt-code {
+      font-size: 15px;
+      font-weight: 700;
+    }
+    .alt-de {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-muted);
+    }
   </style>
 </head>
 <body>
 
-<div class="app-card">
-  <button id="connectBtn" onclick="toggleConnect()">Подключить сканер</button>
-  <div id="status" class="status-bar">Статус: Отключено</div>
+<div class="container">
+  <!-- Верхняя строка со статусом и кнопкой -->
+  <div class="header-bar">
+    <div id="status" class="status-text">Сканер отключен</div>
+    <button id="connectBtn" class="btn-connect" onclick="toggleConnect()">Подключить</button>
+  </div>
 
-  <div class="panel" id="resultPanel" style="display: none;">
-    <div id="swatch" class="color-swatch">Lab: ---, ---, ---</div>
-    
-    <div class="title-row">
-      <div>
-        <div id="ralCode" class="ral-code">RAL ----</div>
-        <div id="ralName" style="color: #94a3b8; font-size: 14px; margin-top: 2px;">---</div>
-      </div>
-      <div id="badge" class="badge">---</div>
+  <!-- Главный результат измерения -->
+  <div class="card" id="mainCard" style="display: none;">
+    <div id="mainSwatch" class="main-swatch">
+      <div id="labValues" class="swatch-lab">Lab: ---, ---, ---</div>
     </div>
 
-    <div style="font-size: 13px; margin-top: 10px; color: #cbd5e1;">
-      Погрешность: <strong id="deVal">0.00</strong> ΔE00 &nbsp;|&nbsp;
-      Точность: <strong id="confVal">0</strong>%
+    <div class="main-info">
+      <div>
+        <div id="ralCode" class="ral-code">RAL ----</div>
+        <div id="ralName" class="ral-name">---</div>
+      </div>
+      <div id="qualityBadge" class="badge">---</div>
+    </div>
+
+    <div class="metrics-row">
+      <span>Разница: <strong id="deVal">0.00</strong> ΔE00</span>
+      <span>Точность: <strong id="confVal">0</strong>%</span>
     </div>
   </div>
 
-  <div class="panel" id="altPanel" style="display: none;">
-    <div style="font-size: 12px; color: #94a3b8; text-transform: uppercase; margin-bottom: 6px;">
-      Ближайшие совпадения
+  <!-- Ближайшие альтернативные цвета с плашками -->
+  <div class="card" id="altCard" style="display: none;">
+    <div class="alt-title">Ближайшие альтернативы</div>
+
+    <div class="alt-item">
+      <div id="alt1Swatch" class="mini-swatch"></div>
+      <div class="alt-details">
+        <div id="alt1Code" class="alt-code">RAL ----</div>
+      </div>
+      <div id="alt1De" class="alt-de">ΔE --</div>
     </div>
-    <div class="alt-row">
-      <span id="alt1">2. RAL ----</span>
-      <span id="alt1De">ΔE --</span>
-    </div>
-    <div class="alt-row">
-      <span id="alt2">3. RAL ----</span>
-      <span id="alt2De">ΔE --</span>
+
+    <div class="alt-item">
+      <div id="alt2Swatch" class="mini-swatch"></div>
+      <div class="alt-details">
+        <div id="alt2Code" class="alt-code">RAL ----</div>
+      </div>
+      <div id="alt2De" class="alt-de">ΔE --</div>
     </div>
   </div>
 </div>
@@ -140,8 +228,32 @@
   const CHAR_TX_UUID = "6e400003-b5a3-f393-e0a9-e50e24dcca9e";
 
   let bleDevice = null;
-  let gattServer = null;
 
+  // База эталонных Lab для вычисления цветов альтернативных плашек
+  const ralRefLab = {
+    "RAL 1000": [76.5, 1.2, 28.1],   "RAL 1001": [75.8, 5.7, 26.2],   "RAL 1002": [73.2, 7.4, 39.6],
+    "RAL 1013": [86.8, 0.4, 10.8],   "RAL 1014": [80.4, 3.7, 24.1],   "RAL 1015": [84.4, 2.8, 16.9],
+    "RAL 1019": [64.2, 3.8, 15.4],   "RAL 1020": [60.8, 1.2, 25.6],   "RAL 1023": [78.4, 11.2, 78.8],
+    "RAL 1035": [56.4, 2.2, 10.8],   "RAL 2002": [45.8, 51.4, 44.2],  "RAL 3000": [45.2, 50.1, 37.4],
+    "RAL 3001": [41.2, 50.8, 32.1],  "RAL 3007": [21.2, 18.4, 5.6],   "RAL 3012": [61.4, 21.8, 22.4],
+    "RAL 3014": [58.4, 32.8, 16.8],  "RAL 3015": [69.8, 24.1, 11.8],  "RAL 3016": [44.2, 41.8, 31.2],
+    "RAL 3018": [48.4, 52.1, 24.6],  "RAL 3020": [46.9, 59.8, 44.5],  "RAL 3027": [41.2, 52.4, 26.4],
+    "RAL 3028": [45.8, 62.4, 43.1],  "RAL 5001": [31.2, -16.4, -21.2],"RAL 5002": [24.1, 13.5, -44.8],
+    "RAL 5003": [22.4, 0.8, -24.1],  "RAL 5005": [33.2, -1.9, -37.2], "RAL 5013": [20.8, 3.4, -26.4],
+    "RAL 5015": [48.2, -13.5, -31.7],"RAL 5017": [28.4, -7.4, -28.4], "RAL 5019": [37.4, -12.4, -27.4],
+    "RAL 5022": [21.2, 8.4, -31.2],  "RAL 6004": [26.4, -18.4, -2.4], "RAL 6016": [40.1, -36.4, 8.4],
+    "RAL 6026": [36.4, -34.2, 4.8],  "RAL 6028": [35.4, -18.4, 4.8],  "RAL 6036": [32.1, -28.4, 2.4],
+    "RAL 7004": [65.4, -0.4, -0.8],  "RAL 7016": [29.3, -0.6, -3.7],  "RAL 7024": [33.7, -0.7, -2.9],
+    "RAL 7032": [72.4, -0.4, 7.8],   "RAL 7034": [58.4, -0.4, 10.8],  "RAL 7035": [82.1, -1.0, 0.8],
+    "RAL 7036": [62.4, 0.8, 0.4],    "RAL 7038": [73.4, -0.8, 2.4],   "RAL 7040": [67.2, -1.4, -2.8],
+    "RAL 7044": [73.8, 0.4, 6.4],    "RAL 8014": [26.4, 9.8, 12.4],   "RAL 8016": [25.4, 17.4, 14.2],
+    "RAL 8017": [25.8, 7.6, 9.8],    "RAL 8022": [16.4, 0.8, 0.8],    "RAL 9001": [91.2, -0.8, 5.8],
+    "RAL 9003": [95.2, -0.6, 1.8],   "RAL 9005": [5.1, 0.1, -0.5],    "RAL 9006": [68.4, -0.8, 0.4],
+    "RAL 9010": [93.8, 0.2, 5.1],    "RAL 9011": [16.4, -0.4, -0.8],  "RAL 9016": [96.1, -0.2, 1.1],
+    "RAL 9017": [16.8, 0.2, -0.2]
+  };
+
+  // Конвертер CIE Lab (D65) в sRGB
   function labToRgb(L, a, b) {
     let y = (L + 16) / 116;
     let x = a / 500 + y;
@@ -164,6 +276,14 @@
     return `rgb(${r}, ${g}, ${bl})`;
   }
 
+  function getRalColor(ralCode) {
+    if (ralRefLab[ralCode]) {
+      const [l, a, b] = ralRefLab[ralCode];
+      return labToRgb(l, a, b);
+    }
+    return "#334155";
+  }
+
   async function toggleConnect() {
     if (bleDevice && bleDevice.gatt.connected) {
       bleDevice.gatt.disconnect();
@@ -171,8 +291,7 @@
     }
 
     try {
-      document.getElementById('status').innerText = "Статус: Поиск устройства...";
-      
+      document.getElementById('status').innerText = "Поиск...";
       bleDevice = await navigator.bluetooth.requestDevice({
         filters: [{ name: "RAL-Scanner-PRO" }],
         optionalServices: [SERVICE_UUID]
@@ -180,32 +299,32 @@
 
       bleDevice.addEventListener('gattserverdisconnected', onDisconnected);
 
-      document.getElementById('status').innerText = "Статус: Подключение...";
-      gattServer = await bleDevice.gatt.connect();
-
-      const service = await gattServer.getPrimaryService(SERVICE_UUID);
+      document.getElementById('status').innerText = "Подключение...";
+      const server = await bleDevice.gatt.connect();
+      const service = await server.getPrimaryService(SERVICE_UUID);
       const txChar = await service.getCharacteristic(CHAR_TX_UUID);
 
       await txChar.startNotifications();
       txChar.addEventListener('characteristicvaluechanged', handleTelemetry);
 
-      document.getElementById('status').innerText = "Статус: Подключено к сканеру";
+      document.getElementById('status').innerText = "Подключен";
       document.getElementById('connectBtn').innerText = "Отключить";
       document.getElementById('connectBtn').style.background = "#dc2626";
-      document.getElementById('resultPanel').style.display = "block";
-      document.getElementById('altPanel').style.display = "block";
+      document.getElementById('mainCard').style.display = "block";
+      document.getElementById('altCard').style.display = "block";
 
     } catch (error) {
-      document.getElementById('status').innerText = "Ошибка: " + error.message;
+      document.getElementById('status').innerText = "Ошибка";
+      alert("Сбой подключения: " + error.message);
     }
   }
 
   function onDisconnected() {
-    document.getElementById('status').innerText = "Статус: Отключено";
-    document.getElementById('connectBtn').innerText = "Подключить сканер";
+    document.getElementById('status').innerText = "Отключен";
+    document.getElementById('connectBtn').innerText = "Подключить";
     document.getElementById('connectBtn').style.background = "#2563eb";
-    document.getElementById('resultPanel').style.display = "none";
-    document.getElementById('altPanel').style.display = "none";
+    document.getElementById('mainCard').style.display = "none";
+    document.getElementById('altCard').style.display = "none";
   }
 
   function handleTelemetry(event) {
@@ -218,32 +337,41 @@
       document.getElementById('deVal').innerText = Number(data.dE).toFixed(2);
       document.getElementById('confVal').innerText = data.confidence;
 
-      const badge = document.getElementById('badge');
+      // Плашка качества
+      const badge = document.getElementById('qualityBadge');
       badge.innerText = data.quality;
       if (data.dE < 2.0) {
-        badge.style.background = "#dcfce7"; badge.style.color = "#166534";
+        badge.style.background = "#14532d"; badge.style.color = "#86efac";
       } else if (data.dE < 4.0) {
-        badge.style.background = "#fef3c7"; badge.style.color = "#92400e";
+        badge.style.background = "#713f12"; badge.style.color = "#fde047";
       } else {
-        badge.style.background = "#fee2e2"; badge.style.color = "#991b1b";
+        badge.style.background = "#7f1d1d"; badge.style.color = "#fca5a5";
       }
 
+      // Главная плашка (реальный замер по Lab)
       if (data.lab) {
         const rgb = labToRgb(data.lab[0], data.lab[1], data.lab[2]);
-        const swatch = document.getElementById('swatch');
-        swatch.style.backgroundColor = rgb;
-        swatch.innerText = `Lab: ${Number(data.lab[0]).toFixed(1)}, ${Number(data.lab[1]).toFixed(1)}, ${Number(data.lab[2]).toFixed(1)}`;
+        document.getElementById('mainSwatch').style.backgroundColor = rgb;
+        document.getElementById('labValues').innerText = 
+          `Lab: ${Number(data.lab[0]).toFixed(1)}, ${Number(data.lab[1]).toFixed(1)}, ${Number(data.lab[2]).toFixed(1)}`;
       }
 
+      // Отрисовка альтернативных вариантов с цветом
       if (data.alternatives && data.alternatives.length >= 2) {
-        document.getElementById('alt1').innerText = "2. " + data.alternatives[0].ral;
-        document.getElementById('alt1De').innerText = "ΔE " + Number(data.alternatives[0].dE).toFixed(1);
-        document.getElementById('alt2').innerText = "3. " + data.alternatives[1].ral;
-        document.getElementById('alt2De').innerText = "ΔE " + Number(data.alternatives[1].dE).toFixed(1);
+        const alt1 = data.alternatives[0];
+        const alt2 = data.alternatives[1];
+
+        document.getElementById('alt1Code').innerText = alt1.ral;
+        document.getElementById('alt1De').innerText = `ΔE ${Number(alt1.dE).toFixed(1)}`;
+        document.getElementById('alt1Swatch').style.backgroundColor = getRalColor(alt1.ral);
+
+        document.getElementById('alt2Code').innerText = alt2.ral;
+        document.getElementById('alt2De').innerText = `ΔE ${Number(alt2.dE).toFixed(1)}`;
+        document.getElementById('alt2Swatch').style.backgroundColor = getRalColor(alt2.ral);
       }
 
     } catch (e) {
-      console.warn("Ошибка формата данных:", e, raw);
+      console.warn("Ошибка парсинга:", e, raw);
     }
   }
 </script>
