@@ -9,10 +9,7 @@
   <meta name="theme-color" content="#07090e">
   <link rel="manifest" href="manifest.json">
   <title>Color Station Pro</title>
-  
-  <!-- Библиотека генерации PDF -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-
   <style>
     :root {
       --bg: #07090e;
@@ -47,7 +44,6 @@
       padding-bottom: max(16px, env(safe-area-inset-bottom));
     }
 
-    /* ЭКРАН 1: ВЫКЛЮЧАТЕЛЬ */
     #connectScreen {
       display: flex;
       flex-direction: column;
@@ -117,11 +113,10 @@
       letter-spacing: 0.1em;
     }
 
-    /* ЭКРАН 2: ДАШБОРД */
     #dashboardScreen {
       display: none;
       flex-direction: column;
-      gap: 16px;
+      gap: 14px;
       width: 100%;
     }
     .top-nav {
@@ -168,7 +163,6 @@
       border-color: var(--accent);
     }
 
-    /* ВЫБОР ПАЛИТРЫ */
     .catalog-selector {
       display: grid;
       grid-template-columns: repeat(4, 1fr);
@@ -195,10 +189,9 @@
       box-shadow: 0 2px 8px var(--accent-glow);
     }
 
-    /* ГЛАВНАЯ ЦВЕТНАЯ ПЛАШКА */
     .dominant-swatch {
       width: 100%;
-      min-height: 220px;
+      min-height: 200px;
       border-radius: 24px;
       padding: 20px;
       display: flex;
@@ -238,19 +231,39 @@
       color: #fff;
     }
     .main-code {
-      font-size: 3rem;
+      font-size: 2.8rem;
       font-weight: 900;
       letter-spacing: -0.04em;
       line-height: 1.05;
     }
     .main-name {
-      font-size: 1.2rem;
+      font-size: 1.15rem;
       font-weight: 600;
       margin-top: 6px;
       opacity: 0.9;
     }
 
-    /* СЕТКА МОДЕЛЕЙ */
+    .btn-scan {
+      width: 100%;
+      background: linear-gradient(135deg, #2563eb, #1d4ed8);
+      color: #fff;
+      border: none;
+      border-radius: 16px;
+      padding: 16px;
+      font-size: 1.1rem;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      box-shadow: 0 4px 15px rgba(37, 99, 235, 0.35);
+      cursor: pointer;
+    }
+    .btn-scan:active {
+      transform: scale(0.98);
+      filter: brightness(0.95);
+    }
+
     .color-models-grid {
       display: grid;
       grid-template-columns: 1fr 1fr;
@@ -305,7 +318,6 @@
       transition: width 0.3s ease;
     }
 
-    /* АЛЬТЕРНАТИВЫ */
     .alts-wrapper {
       display: flex;
       flex-direction: column;
@@ -353,7 +365,6 @@
 </head>
 <body>
 
-  <!-- ЭКРАН 1: ВЫКЛЮЧАТЕЛЬ -->
   <section id="connectScreen">
     <div class="hero-text">
       <h1>Color Station Pro</h1>
@@ -371,10 +382,9 @@
       <div id="switchStatus" class="switch-label">Включить прибор</div>
     </div>
 
-    <div style="font-size: 0.85rem; color: rgba(255,255,255,0.3);">BLE CIE D65/10° • PWA Certified</div>
+    <div style="font-size: 0.85rem; color: rgba(255,255,255,0.3);">BLE CIE D65/10° • Two-Way Trigger</div>
   </section>
 
-  <!-- ЭКРАН 2: ДАШБОРД -->
   <section id="dashboardScreen">
     <div class="top-nav">
       <div class="conn-status">
@@ -388,7 +398,6 @@
       </div>
     </div>
 
-    <!-- ВЫБОР ПАЛИТРЫ -->
     <div class="catalog-selector">
       <button class="catalog-tab active" onclick="setCatalog('ral_classic')">RAL Classic</button>
       <button class="catalog-tab" onclick="setCatalog('ral_design')">RAL Design</button>
@@ -396,7 +405,6 @@
       <button class="catalog-tab" onclick="setCatalog('pantone')">Pantone</button>
     </div>
 
-    <!-- ГЛАВНЫЙ ЦВЕТ -->
     <div id="dominantSwatch" class="dominant-swatch">
       <div class="swatch-header">
         <div id="qualityPill" class="quality-pill">ОЖИДАНИЕ ЗАМЕРА</div>
@@ -404,11 +412,19 @@
       </div>
       <div class="swatch-body">
         <div id="mainColorCode" class="main-code">----</div>
-        <div id="mainColorName" class="main-name">Приложите датчик к образцу</div>
+        <div id="mainColorName" class="main-name">Нажмите «Сделать замер»</div>
       </div>
     </div>
 
-    <!-- СЕТКА МОДЕЛЕЙ -->
+    <button id="btnScan" class="btn-scan" onclick="triggerRemoteScan()">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+        <circle cx="12" cy="12" r="10"></circle>
+        <line x1="12" y1="8" x2="12" y2="16"></line>
+        <line x1="8" y1="12" x2="16" y2="12"></line>
+      </svg>
+      Сделать замер
+    </button>
+
     <div class="color-models-grid">
       <div class="model-card" style="grid-column: span 2;">
         <div style="display: flex; justify-content: space-between; align-items: baseline;">
@@ -444,7 +460,6 @@
       </div>
     </div>
 
-    <!-- АЛЬТЕРНАТИВЫ -->
     <div class="alts-wrapper">
       <div class="alts-title">Ближайшие артикулы каталога</div>
       <div class="alt-tile">
@@ -465,7 +480,6 @@
   </section>
 
 <script>
-  // РЕГИСТРАЦИЯ PWA SERVICE WORKER
   if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
       navigator.serviceWorker.register('./sw.js').catch((err) => console.log('SW error:', err));
@@ -473,9 +487,11 @@
   }
 
   const SERVICE_UUID = "6e400001-b5a3-f393-e0a9-e50e24dcca9e";
+  const CHAR_RX_UUID = "6e400002-b5a3-f393-e0a9-e50e24dcca9e";
   const CHAR_TX_UUID = "6e400003-b5a3-f393-e0a9-e50e24dcca9e";
 
   let bleDevice = null;
+  let rxChar = null;
   let currentCatalog = 'ral_classic';
   let lastMeasuredLab = null;
   let lastReportData = null;
@@ -904,7 +920,22 @@
     }
   }
 
-  // ЭКСПОРТ В СТАНДАРТНЫЙ PDF ПАСПОРТ
+  // ОТПРАВКА КОМАНДЫ ЗАМЕРА НА ПРИБОР
+  async function triggerRemoteScan() {
+    if (!rxChar) {
+      alert("Прибор не подключен!");
+      return;
+    }
+    try {
+      const encoder = new TextEncoder();
+      await rxChar.writeValue(encoder.encode("SCAN"));
+      document.getElementById('qualityPill').innerText = "ИЗМЕРЕНИЕ...";
+      document.getElementById('qualityPill').style.color = "#60a5fa";
+    } catch (err) {
+      console.error("Ошибка отправки команды замера:", err);
+    }
+  }
+
   function exportToPDF() {
     if (!lastMeasuredLab || !lastReportData) {
       alert("Сначала выполните замер цвета!");
@@ -912,11 +943,7 @@
     }
 
     const { jsPDF } = window.jspdf;
-    const doc = new jsPDF({
-      orientation: "portrait",
-      unit: "mm",
-      format: "a4"
-    });
+    const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
 
     const [L, a, b] = lastMeasuredLab;
     const [r, g, bl] = labToRgb(L, a, b);
@@ -924,7 +951,6 @@
     const cmyk = rgbToCmyk(r, g, bl);
     const lch = labToLch(L, a, b);
 
-    // Заголовок отчёта
     doc.setFillColor(15, 23, 42);
     doc.rect(0, 0, 210, 40, 'F');
     doc.setTextColor(255, 255, 255);
@@ -936,18 +962,12 @@
     doc.setTextColor(148, 163, 184);
     doc.text(`Generated: ${new Date().toLocaleString()} | Instrument: RAL-Scanner-PRO`, 20, 32);
 
-    // Цветная плашка
     doc.setFillColor(r, g, bl);
     doc.roundedRect(20, 50, 170, 45, 4, 4, 'F');
     doc.setDrawColor(200, 200, 200);
     doc.roundedRect(20, 50, 170, 45, 4, 4, 'D');
 
-    // Текст поверх плашки (автоконтраст)
-    if (L > 65) {
-      doc.setTextColor(15, 23, 42);
-    } else {
-      doc.setTextColor(255, 255, 255);
-    }
+    doc.setTextColor(L > 65 ? 15 : 255, L > 65 ? 23 : 255, L > 65 ? 42 : 255);
     doc.setFont("helvetica", "bold");
     doc.setFontSize(26);
     doc.text(lastReportData.code, 28, 75);
@@ -955,17 +975,12 @@
     doc.setFont("helvetica", "normal");
     doc.text(lastReportData.name, 28, 85);
 
-    // Блок параметров
     doc.setTextColor(15, 23, 42);
     doc.setFontSize(14);
     doc.setFont("helvetica", "bold");
     doc.text("Chromatic Coordinates", 20, 110);
     doc.setDrawColor(226, 232, 240);
     doc.line(20, 114, 190, 114);
-
-    doc.setFontSize(11);
-    doc.setFont("helvetica", "normal");
-    doc.setTextColor(51, 65, 85);
 
     const rows = [
       ["Color System Catalog:", `${lastReportData.catalog}`],
@@ -974,7 +989,7 @@
       ["CIE L*C*h:", `${lch.L.toFixed(1)},  ${lch.C.toFixed(1)},  ${lch.h.toFixed(1)} deg`],
       ["HEX / HTML:", `${hex}`],
       ["sRGB (D65):", `R:${r},  G:${g},  B:${bl}`],
-      ["CMYK (Print Approximation):", `C:${cmyk.c}%, M:${cmyk.m}%, Y:${cmyk.y}%, K:${cmyk.k}%`]
+      ["CMYK (Print Approximation):", `C:${cmyk.c}%, M:${cmyk.m}%, Y:${cmyk.y}%`]
     ];
 
     let y = 125;
@@ -986,12 +1001,10 @@
       y += 10;
     });
 
-    // Подвал
     doc.setFontSize(9);
     doc.setTextColor(148, 163, 184);
     doc.text("Certified standard: CIE D65 / 10 deg Observer. Calculation model: CIEDE2000.", 20, 280);
 
-    // Скачивание
     doc.save(`Color_Report_${lastReportData.code.replace(/\s+/g, '_')}.pdf`);
   }
 
@@ -1039,10 +1052,12 @@ CMYK: C:${cmyk.c}% M:${cmyk.m}% Y:${cmyk.y}% K:${cmyk.k}%
 
       const server = await bleDevice.gatt.connect();
       const service = await server.getPrimaryService(SERVICE_UUID);
-      const txChar = await service.getCharacteristic(CHAR_TX_UUID);
 
-      await txChar.startNotifications();
-      txChar.addEventListener('characteristicvaluechanged', handleTelemetry);
+      pTxChar = await service.getCharacteristic(CHAR_TX_UUID);
+      rxChar = await service.getCharacteristic(CHAR_RX_UUID);
+
+      await pTxChar.startNotifications();
+      pTxChar.addEventListener('characteristicvaluechanged', handleTelemetry);
 
       document.getElementById('connectScreen').style.display = 'none';
       document.getElementById('dashboardScreen').style.display = 'flex';
@@ -1050,7 +1065,7 @@ CMYK: C:${cmyk.c}% M:${cmyk.m}% Y:${cmyk.y}% K:${cmyk.k}%
     } catch (err) {
       sw.classList.remove('connecting');
       label.innerText = "Включить прибор";
-      console.log("Connect cancelled or failed", err);
+      console.log("Connect failed", err);
     }
   }
 
@@ -1063,6 +1078,7 @@ CMYK: C:${cmyk.c}% M:${cmyk.m}% Y:${cmyk.y}% K:${cmyk.k}%
     document.getElementById('connectScreen').style.display = 'flex';
     document.getElementById('powerBtn').classList.remove('connecting');
     document.getElementById('switchStatus').innerText = "Включить прибор";
+    rxChar = null;
   }
 </script>
 
