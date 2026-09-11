@@ -243,7 +243,6 @@
       opacity: 0.9;
     }
 
-    /* КНОПКА ЗАМЕРА */
     .btn-scan {
       width: 100%;
       background: linear-gradient(135deg, #2563eb, #1d4ed8);
@@ -366,7 +365,7 @@
 </head>
 <body>
 
-  <!-- ЭКРАН 1: ТУМБЛЕР ВКЛЮЧЕНИЯ -->
+  <!-- Экран тумблера включения -->
   <section id="connectScreen">
     <div class="hero-text">
       <h1>Color Station Pro</h1>
@@ -387,7 +386,7 @@
     <div style="font-size: 0.85rem; color: rgba(255,255,255,0.3);">BLE CIE D65/10° • Two-Way Trigger</div>
   </section>
 
-  <!-- ЭКРАН 2: ДАШБОРД РАБОТЫ -->
+  <!-- Экран панели управления -->
   <section id="dashboardScreen">
     <div class="top-nav">
       <div class="conn-status">
@@ -419,7 +418,6 @@
       </div>
     </div>
 
-    <!-- КНОПКА ЗАМЕРА -->
     <button id="btnScan" class="btn-scan" onclick="triggerRemoteScan()">
       <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
         <circle cx="12" cy="12" r="10"></circle>
@@ -484,9 +482,20 @@
   </section>
 
 <script>
+  // Регистрация Service Worker с автоматической перезагрузкой при обновлении
   if ('serviceWorker' in navigator) {
+    let refreshing = false;
+    navigator.serviceWorker.addEventListener('controllerchange', () => {
+      if (!refreshing) {
+        refreshing = true;
+        window.location.reload();
+      }
+    });
+
     window.addEventListener('load', () => {
-      navigator.serviceWorker.register('./sw.js').catch((err) => console.log('SW error:', err));
+      navigator.serviceWorker.register('./sw.js').then((reg) => {
+        reg.update();
+      }).catch((err) => console.log('SW error:', err));
     });
   }
 
@@ -925,7 +934,7 @@
     }
   }
 
-  // ОТПРАВКА КОМАНДЫ ЗАМЕРА В МИКРОКОНТРОЛЛЕР
+  // Отправка команды замера на ESP32-C3
   async function triggerRemoteScan() {
     if (!rxChar) {
       alert("Прибор не подключен!");
@@ -994,7 +1003,7 @@
       ["CIE L*C*h:", `${lch.L.toFixed(1)},  ${lch.C.toFixed(1)},  ${lch.h.toFixed(1)} deg`],
       ["HEX / HTML:", `${hex}`],
       ["sRGB (D65):", `R:${r},  G:${g},  B:${bl}`],
-      ["CMYK (Print Approximation):", `C:${cmyk.c}%, M:${cmyk.m}%, Y:${cmyk.y}%, K:${cmyk.k}%`]
+      ["CMYK (Print Approximation):", `C:${cmyk.c}%, M:${cmyk.m}%, Y:${cmyk.y}%`]
     ];
 
     let y = 125;
