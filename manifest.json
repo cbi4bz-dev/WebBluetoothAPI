@@ -1,5 +1,5 @@
 {
-  "name": "RAL Colorimeter Pro",
+  "name": "Color Station Pro",
   "short_name": "RAL Scanner",
   "start_url": "./index.html",
   "display": "standalone",
@@ -8,14 +8,16 @@
   "orientation": "portrait",
   "icons": [
     {
-      "src": "https://raw.githubusercontent.com/cbi4bz-dev/WebBluetoothAPI/main/icon-192.png",
+      "src": "https://cdn-icons-png.flaticon.com/512/870/870183.png",
       "sizes": "192x192",
-      "type": "image/png"
+      "type": "image/png",
+      "purpose": "any maskable"
     },
     {
-      "src": "https://raw.githubusercontent.com/cbi4bz-dev/WebBluetoothAPI/main/icon-512.png",
+      "src": "https://cdn-icons-png.flaticon.com/512/870/870183.png",
       "sizes": "512x512",
-      "type": "image/png"
+      "type": "image/png",
+      "purpose": "any maskable"
     }
   ]
 }
