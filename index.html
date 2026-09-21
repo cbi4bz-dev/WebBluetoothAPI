@@ -511,25 +511,26 @@
   let lastReportData = null;
 
   // ==========================================================================
-  // БАЗА СПЕКТРАЛЬНЫХ ОТПЕЧАТКОВ (AS7341 F1..F8)
+  // БАЗА СПЕКТРАЛЬНЫХ ОТПЕЧАТКОВ F2..F8 (F1 ИСКЛЮЧЁН ИЗ-ЗА ШУМА СВЕТОДИОДА)
+  // Ключи заданы числовыми строками без префиксов для надёжности парсинга
   // ==========================================================================
   const RAL_SPECTRAL_FINGERPRINTS = {
-    "RAL 1021": [0.708, 0.182, 0.310, 0.402, 0.763, 0.865, 0.861, 0.873],
-    "RAL 1017": [0.550, 0.180, 0.280, 0.220, 0.580, 0.780, 0.810, 0.830],
-    "RAL 1013": [0.860, 0.760, 0.800, 0.840, 0.900, 0.920, 0.900, 0.910],
-    "RAL 2004": [0.385, 0.339, 0.472, 0.543, 0.753, 0.895, 0.848, 0.880],
-    "RAL 3020": [0.434, 0.077, 0.131, 0.056, 0.221, 0.405, 0.749, 0.889],
-    "RAL 3018": [0.420, 0.120, 0.160, 0.140, 0.320, 0.490, 0.710, 0.820],
-    "RAL 5002": [0.051, 0.188, 0.116, 0.072, 0.034, 0.024, 0.015, 0.024],
-    "RAL 5010": [0.054, 0.202, 0.148, 0.113, 0.045, 0.023, 0.014, 0.021],
-    "RAL 6005": [0.024, 0.042, 0.038, 0.060, 0.036, 0.022, 0.006, 0.014],
-    "RAL 6018": [0.173, 0.132, 0.180, 0.356, 0.274, 0.197, 0.107, 0.120],
-    "RAL 7024": [0.070, 0.087, 0.073, 0.080, 0.073, 0.070, 0.061, 0.063],
-    "RAL 7035": [0.656, 0.662, 0.660, 0.681, 0.670, 0.672, 0.645, 0.650],
-    "RAL 7040": [0.397, 0.430, 0.420, 0.422, 0.398, 0.395, 0.391, 0.404],
-    "RAL 8017": [0.044, 0.026, 0.024, 0.025, 0.039, 0.053, 0.059, 0.065],
-    "RAL 9003": [0.991, 0.986, 0.989, 0.984, 0.987, 0.984, 0.987, 0.986],
-    "RAL 9005": [0.004, 0.007, 0.003, 0.009, 0.006, 0.010, 0.007, 0.008]
+    "1021": [0.186, 0.312, 0.409, 0.771, 0.880, 0.871, 0.890],
+    "1017": [0.180, 0.280, 0.220, 0.580, 0.780, 0.810, 0.830],
+    "1013": [0.760, 0.800, 0.840, 0.900, 0.920, 0.900, 0.910],
+    "2004": [0.339, 0.472, 0.543, 0.753, 0.895, 0.848, 0.880],
+    "3020": [0.077, 0.130, 0.056, 0.221, 0.406, 0.751, 0.892],
+    "3018": [0.120, 0.160, 0.140, 0.320, 0.490, 0.710, 0.820],
+    "5002": [0.188, 0.116, 0.072, 0.034, 0.024, 0.015, 0.024],
+    "5010": [0.202, 0.148, 0.113, 0.045, 0.023, 0.014, 0.021],
+    "6005": [0.042, 0.038, 0.060, 0.036, 0.022, 0.006, 0.014],
+    "6018": [0.132, 0.180, 0.356, 0.274, 0.197, 0.107, 0.120],
+    "7024": [0.087, 0.073, 0.080, 0.073, 0.070, 0.061, 0.063],
+    "7035": [0.662, 0.660, 0.681, 0.670, 0.672, 0.645, 0.650],
+    "7040": [0.430, 0.420, 0.422, 0.398, 0.395, 0.391, 0.404],
+    "8017": [0.026, 0.024, 0.025, 0.039, 0.053, 0.059, 0.065],
+    "9003": [0.986, 0.989, 0.984, 0.987, 0.984, 0.987, 0.986],
+    "9005": [0.007, 0.003, 0.009, 0.006, 0.010, 0.007, 0.008]
   };
 
   const CATALOGS = {
@@ -871,25 +872,30 @@
   }
 
   // ==========================================================================
-  // ГИБРИДНЫЙ ПОИСК ЦВЕТА: CIEDE2000 + SPECTRAL FINGERPRINT
+  // ГИБРИДНЫЙ ДВИЖОК: CIEDE2000 + ФОРМА СПЕКТРА F2..F8
   // ==========================================================================
   function updateCatalogSearch(L, a, b, measuredRefl) {
     const list = CATALOGS[currentCatalog];
 
-    // Нормализация вектора отражения по площади
+    // Исключаем зашумлённый F1, нормализуем вектор по 7 каналам F2..F8
     let normMeasured = null;
-    if (measuredRefl && Array.isArray(measuredRefl)) {
-      const sum = measuredRefl.reduce((acc, v) => acc + v, 0) || 1.0;
-      normMeasured = measuredRefl.map(v => v / sum);
+    if (measuredRefl && Array.isArray(measuredRefl) && measuredRefl.length >= 8) {
+      const cleanRefl = measuredRefl.slice(1);
+      const sum = cleanRefl.reduce((acc, v) => acc + v, 0) || 1.0;
+      normMeasured = cleanRefl.map(v => v / sum);
     }
 
     let ranked = list.map(item => {
       const dE = deltaE00(L, a, b, item.L, item.a, item.b);
       let spectralDistance = 0.0;
+      let hasFingerprint = false;
 
-      // Если в каталоге RAL Classic есть спектральный отпечаток — сравниваем форму спектра
-      const refFingerprint = RAL_SPECTRAL_FINGERPRINTS[item.code];
+      // Очищаем код от букв ("RAL 1021" -> "1021")
+      const pureCode = item.code.replace(/[^\d]/g, '');
+      const refFingerprint = RAL_SPECTRAL_FINGERPRINTS[pureCode];
+
       if (refFingerprint && normMeasured) {
+        hasFingerprint = true;
         const refSum = refFingerprint.reduce((acc, v) => acc + v, 0) || 1.0;
         const normRef = refFingerprint.map(v => v / refSum);
 
@@ -898,11 +904,13 @@
         }, 0);
         spectralDistance = Math.sqrt(sumSquares);
       } else {
-        spectralDistance = dE / 25.0; // fallback
+        spectralDistance = dE / 20.0;
       }
 
-      // Комбинированный скоринг: dE задает базис, спектральный отпечаток решает споры
-      const combinedScore = (dE * 0.45) + (spectralDistance * 40.0 * 0.55);
+      // Приоритет спектрального отпечатка при спорных колориметрических сдвигах
+      const combinedScore = hasFingerprint
+        ? (dE * 0.25) + (spectralDistance * 150.0 * 0.75)
+        : dE;
 
       return {
         ...item,
@@ -921,9 +929,9 @@
     document.getElementById('deltaText').innerHTML = `${top1.dE.toFixed(2)} <span style="font-size:0.8rem; font-weight:normal; color:var(--text-dim);">ΔE</span>`;
 
     const pill = document.getElementById('qualityPill');
-    if (top1.dE < 2.0) {
+    if (top1.dE < 3.0 || top1.spectralDistance < 0.08) {
       pill.innerText = "ИДЕАЛЬНОЕ СОВПАДЕНИЕ"; pill.style.color = "#4ade80";
-    } else if (top1.dE < 4.5) {
+    } else if (top1.dE < 6.0 || top1.spectralDistance < 0.15) {
       pill.innerText = "ХОРОШЕЕ ПОПАДАНИЕ"; pill.style.color = "#facc15";
     } else {
       pill.innerText = "ПРИБЛИЗИТЕЛЬНЫЙ ОТТЕНОК"; pill.style.color = "#f87171";
@@ -983,7 +991,6 @@
       document.getElementById('barY').style.width = cmyk.y + '%';
       document.getElementById('barK').style.width = cmyk.k + '%';
 
-      // Вызываем гибридный поиск со спектральным профилем
       updateCatalogSearch(L, a, b, lastMeasuredRefl);
 
     } catch (e) {
