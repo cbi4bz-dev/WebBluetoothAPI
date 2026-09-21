@@ -365,7 +365,7 @@
 </head>
 <body>
 
-  <!-- Экран тумблера включения -->
+  <!-- Экран включения -->
   <section id="connectScreen">
     <div class="hero-text">
       <h1>Color Station Pro</h1>
@@ -383,7 +383,7 @@
       <div id="switchStatus" class="switch-label">Включить прибор</div>
     </div>
 
-    <div style="font-size: 0.85rem; color: rgba(255,255,255,0.3);">BLE CIE D65/10° • Two-Way Trigger</div>
+    <div style="font-size: 0.85rem; color: rgba(255,255,255,0.3);">Dual-Engine • CIE D65/10° + Spectral Fingerprint</div>
   </section>
 
   <!-- Экран панели управления -->
@@ -482,7 +482,6 @@
   </section>
 
 <script>
-  // Регистрация Service Worker с автоматической перезагрузкой при обновлении
   if ('serviceWorker' in navigator) {
     let refreshing = false;
     navigator.serviceWorker.addEventListener('controllerchange', () => {
@@ -508,7 +507,30 @@
   let pTxChar = null;
   let currentCatalog = 'ral_classic';
   let lastMeasuredLab = null;
+  let lastMeasuredRefl = null;
   let lastReportData = null;
+
+  // ==========================================================================
+  // БАЗА СПЕКТРАЛЬНЫХ ОТПЕЧАТКОВ (AS7341 F1..F8)
+  // ==========================================================================
+  const RAL_SPECTRAL_FINGERPRINTS = {
+    "RAL 1021": [0.708, 0.182, 0.310, 0.402, 0.763, 0.865, 0.861, 0.873],
+    "RAL 1017": [0.550, 0.180, 0.280, 0.220, 0.580, 0.780, 0.810, 0.830],
+    "RAL 1013": [0.860, 0.760, 0.800, 0.840, 0.900, 0.920, 0.900, 0.910],
+    "RAL 2004": [0.385, 0.339, 0.472, 0.543, 0.753, 0.895, 0.848, 0.880],
+    "RAL 3020": [0.434, 0.077, 0.131, 0.056, 0.221, 0.405, 0.749, 0.889],
+    "RAL 3018": [0.420, 0.120, 0.160, 0.140, 0.320, 0.490, 0.710, 0.820],
+    "RAL 5002": [0.051, 0.188, 0.116, 0.072, 0.034, 0.024, 0.015, 0.024],
+    "RAL 5010": [0.054, 0.202, 0.148, 0.113, 0.045, 0.023, 0.014, 0.021],
+    "RAL 6005": [0.024, 0.042, 0.038, 0.060, 0.036, 0.022, 0.006, 0.014],
+    "RAL 6018": [0.173, 0.132, 0.180, 0.356, 0.274, 0.197, 0.107, 0.120],
+    "RAL 7024": [0.070, 0.087, 0.073, 0.080, 0.073, 0.070, 0.061, 0.063],
+    "RAL 7035": [0.656, 0.662, 0.660, 0.681, 0.670, 0.672, 0.645, 0.650],
+    "RAL 7040": [0.397, 0.430, 0.420, 0.422, 0.398, 0.395, 0.391, 0.404],
+    "RAL 8017": [0.044, 0.026, 0.024, 0.025, 0.039, 0.053, 0.059, 0.065],
+    "RAL 9003": [0.991, 0.986, 0.989, 0.984, 0.987, 0.984, 0.987, 0.986],
+    "RAL 9005": [0.004, 0.007, 0.003, 0.009, 0.006, 0.010, 0.007, 0.008]
+  };
 
   const CATALOGS = {
     ral_classic: [
@@ -844,18 +866,51 @@
     event.target.classList.add('active');
 
     if (lastMeasuredLab) {
-      updateCatalogSearch(lastMeasuredLab[0], lastMeasuredLab[1], lastMeasuredLab[2]);
+      updateCatalogSearch(lastMeasuredLab[0], lastMeasuredLab[1], lastMeasuredLab[2], lastMeasuredRefl);
     }
   }
 
-  function updateCatalogSearch(L, a, b) {
+  // ==========================================================================
+  // ГИБРИДНЫЙ ПОИСК ЦВЕТА: CIEDE2000 + SPECTRAL FINGERPRINT
+  // ==========================================================================
+  function updateCatalogSearch(L, a, b, measuredRefl) {
     const list = CATALOGS[currentCatalog];
+
+    // Нормализация вектора отражения по площади
+    let normMeasured = null;
+    if (measuredRefl && Array.isArray(measuredRefl)) {
+      const sum = measuredRefl.reduce((acc, v) => acc + v, 0) || 1.0;
+      normMeasured = measuredRefl.map(v => v / sum);
+    }
+
     let ranked = list.map(item => {
+      const dE = deltaE00(L, a, b, item.L, item.a, item.b);
+      let spectralDistance = 0.0;
+
+      // Если в каталоге RAL Classic есть спектральный отпечаток — сравниваем форму спектра
+      const refFingerprint = RAL_SPECTRAL_FINGERPRINTS[item.code];
+      if (refFingerprint && normMeasured) {
+        const refSum = refFingerprint.reduce((acc, v) => acc + v, 0) || 1.0;
+        const normRef = refFingerprint.map(v => v / refSum);
+
+        const sumSquares = normMeasured.reduce((acc, val, idx) => {
+          return acc + Math.pow(val - normRef[idx], 2);
+        }, 0);
+        spectralDistance = Math.sqrt(sumSquares);
+      } else {
+        spectralDistance = dE / 25.0; // fallback
+      }
+
+      // Комбинированный скоринг: dE задает базис, спектральный отпечаток решает споры
+      const combinedScore = (dE * 0.45) + (spectralDistance * 40.0 * 0.55);
+
       return {
         ...item,
-        dE: deltaE00(L, a, b, item.L, item.a, item.b)
+        dE: dE,
+        spectralDistance: spectralDistance,
+        combinedScore: combinedScore
       };
-    }).sort((x, y) => x.dE - y.dE);
+    }).sort((x, y) => x.combinedScore - y.combinedScore);
 
     const top1 = ranked[0];
     const top2 = ranked[1];
@@ -868,7 +923,7 @@
     const pill = document.getElementById('qualityPill');
     if (top1.dE < 2.0) {
       pill.innerText = "ИДЕАЛЬНОЕ СОВПАДЕНИЕ"; pill.style.color = "#4ade80";
-    } else if (top1.dE < 4.0) {
+    } else if (top1.dE < 4.5) {
       pill.innerText = "ХОРОШЕЕ ПОПАДАНИЕ"; pill.style.color = "#facc15";
     } else {
       pill.innerText = "ПРИБЛИЗИТЕЛЬНЫЙ ОТТЕНОК"; pill.style.color = "#f87171";
@@ -903,6 +958,7 @@
 
       const [L, a, b] = data.lab;
       lastMeasuredLab = [L, a, b];
+      lastMeasuredRefl = data.refl || null;
 
       const [r, g, bl] = labToRgb(L, a, b);
       const hex = rgbToHex(r, g, bl);
@@ -927,14 +983,14 @@
       document.getElementById('barY').style.width = cmyk.y + '%';
       document.getElementById('barK').style.width = cmyk.k + '%';
 
-      updateCatalogSearch(L, a, b);
+      // Вызываем гибридный поиск со спектральным профилем
+      updateCatalogSearch(L, a, b, lastMeasuredRefl);
 
     } catch (e) {
       console.warn("JSON Error:", e);
     }
   }
 
-  // Отправка команды замера на ESP32-C3
   async function triggerRemoteScan() {
     if (!rxChar) {
       alert("Прибор не подключен!");
