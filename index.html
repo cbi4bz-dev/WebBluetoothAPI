@@ -517,7 +517,7 @@
 
     let currentCatalog = "ral_classic";
 
-    // Спектральные отпечатки сенсора AS7341 (F2..F8)
+    // Спектральные эталоны (каналы F2..F8)
     const RAL_SPECTRAL_FINGERPRINTS = {
       "1021": [0.156, 0.273, 0.443, 0.803, 0.879, 0.876, 0.879],
       "1017": [0.180, 0.280, 0.220, 0.580, 0.780, 0.810, 0.830],
@@ -607,14 +607,14 @@
     }
 
     // ========================================================================
-    // ОБРАБОТКА ДАННЫХ И ПОИСК С НОРМАЛИЗАЦИЕЙ СПЕКТРА
+    // ОБРАБОТКА ДАННЫХ И ПОИСК В КАТАЛОГЕ (МЕТРИКА + СПЕКТР)
     // ========================================================================
     let lastReportData = null;
 
     function updateCatalogSearch(L, a, b, measuredRefl) {
       const list = CATALOGS[currentCatalog];
 
-      // Спектральная нормализация вектора F2..F8 к единичной сумме
+      // Спектральная нормализация вектора F2..F8 к сумме 1.0
       let normMeasured = null;
       if (measuredRefl && Array.isArray(measuredRefl) && measuredRefl.length >= 8) {
         const cleanRefl = measuredRefl.slice(1);
@@ -663,12 +663,15 @@
       document.getElementById('deltaText').innerHTML = `${top1.dE.toFixed(2)} <span style="font-size:0.8rem; font-weight:normal; color:var(--text-dim);">ΔE</span>`;
 
       const pill = document.getElementById('qualityPill');
-      if (top1.dE < 3.0) {
-        pill.innerText = "ИДЕАЛЬНОЕ СОВПАДЕНИЕ"; pill.style.color = "var(--success)";
-      } else if (top1.dE < 6.0) {
-        pill.innerText = "ХОРОШЕЕ ПОПАДАНИЕ"; pill.style.color = "var(--warning)";
-      } else {
-        pill.innerText = "ПРИБЛИЗИТЕЛЬНЫЙ ОТТЕНОК"; pill.style.color = "var(--danger)";
+      // Обновляем текст качества, только если не зафиксировано перенасыщение
+      if (!pill.dataset.saturated) {
+        if (top1.dE < 3.0) {
+          pill.innerText = "ИДЕАЛЬНОЕ СОВПАДЕНИЕ"; pill.style.color = "var(--success)";
+        } else if (top1.dE < 6.0) {
+          pill.innerText = "ХОРОШЕЕ ПОПАДАНИЕ"; pill.style.color = "var(--warning)";
+        } else {
+          pill.innerText = "ПРИБЛИЗИТЕЛЬНЫЙ ОТТЕНОК"; pill.style.color = "var(--danger)";
+        }
       }
 
       let [r1, g1, b1] = labToRgb(top1.L, top1.a, top1.b);
@@ -696,7 +699,7 @@
     }
 
     // ========================================================================
-    // BLE УПРАВЛЕНИЕ
+    // BLE УПРАВЛЕНИЕ И ПРИЕМ ДАННЫХ
     // ========================================================================
     const SERVICE_UUID = "6e400001-b5a3-f393-e0a9-e50e24dcca9e";
     const CHAR_RX_UUID = "6e400002-b5a3-f393-e0a9-e50e24dcca9e";
@@ -747,6 +750,17 @@
       const jsonStr = decoder.decode(event.target.value);
       try {
         const data = JSON.parse(jsonStr);
+        const pill = document.getElementById('qualityPill');
+
+        // Контроль насыщения по протоколу v2
+        if (data.saturated) {
+          pill.innerText = `ПЕРЕНАСЫЩЕНИЕ (0x${data.satMask.toString(16).toUpperCase()})`;
+          pill.style.color = "var(--danger)";
+          pill.dataset.saturated = "true";
+        } else {
+          delete pill.dataset.saturated;
+        }
+
         if (data.lab && data.lab.length === 3) {
           const [L, a, b] = data.lab;
           document.getElementById('valL').innerText = L.toFixed(1);
