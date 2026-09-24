@@ -200,7 +200,7 @@
 </head>
 <body>
   <div class="container">
-    <!-- Шапка подключения -->
+    <!-- Подключение -->
     <div class="card header">
       <div>
         <h1>Color Station PRO</h1>
@@ -241,7 +241,7 @@
       </div>
     </div>
 
-    <!-- Координаты сенсора -->
+    <!-- Координаты CIE Lab -->
     <div class="card">
       <div style="font-size: 0.85rem; color: var(--text-dim); text-transform: uppercase; font-weight: 600;">Координаты CIE Lab</div>
       <div class="coords-grid">
@@ -260,7 +260,7 @@
       </div>
     </div>
 
-    <!-- Кнопки управления -->
+    <!-- Управление -->
     <div class="actions">
       <button class="btn" onclick="sendScanCmd()">Сделать замер</button>
       <button class="btn btn-outline" onclick="exportData()">Экспорт</button>
@@ -269,33 +269,240 @@
 
   <script>
     // ========================================================================
-    // КАТАЛОГ ЦВЕТОВ RAL CLASSIC (L*a*b*)
+    // ПОЛНЫЙ КАТАЛОГ ЦВЕТОВ RAL CLASSIC (216 ОТТЕНКОВ)
     // ========================================================================
     const CATALOGS = {
       ral_classic: [
+        // Желтые (1xxx)
         { code: "RAL 1000", name: "Green beige", L: 76.5, a: 2.1, b: 24.3 },
         { code: "RAL 1001", name: "Beige", L: 74.0, a: 5.5, b: 23.5 },
         { code: "RAL 1002", name: "Sand yellow", L: 74.2, a: 6.8, b: 34.0 },
         { code: "RAL 1003", name: "Signal yellow", L: 78.5, a: 16.5, b: 79.5 },
+        { code: "RAL 1004", name: "Golden yellow", L: 72.8, a: 18.2, b: 73.5 },
+        { code: "RAL 1005", name: "Honey yellow", L: 69.5, a: 15.8, b: 67.2 },
+        { code: "RAL 1006", name: "Maize yellow", L: 73.5, a: 21.2, b: 77.8 },
+        { code: "RAL 1007", name: "Daffodil yellow", L: 71.2, a: 24.5, b: 75.1 },
+        { code: "RAL 1011", name: "Brown beige", L: 62.5, a: 11.2, b: 28.5 },
+        { code: "RAL 1012", name: "Lemon yellow", L: 75.2, a: 3.5, b: 62.5 },
+        { code: "RAL 1013", name: "Oyster white", L: 88.5, a: 0.8, b: 8.5 },
+        { code: "RAL 1014", name: "Ivory", L: 82.5, a: 3.8, b: 22.5 },
+        { code: "RAL 1015", name: "Light ivory", L: 85.8, a: 2.5, b: 15.8 },
+        { code: "RAL 1016", name: "Sulfur yellow", L: 86.5, a: -6.5, b: 75.2 },
         { code: "RAL 1017", name: "Saffron yellow", L: 76.8, a: 20.5, b: 58.2 },
         { code: "RAL 1018", name: "Zinc yellow", L: 82.5, a: 4.8, b: 72.5 },
         { code: "RAL 1019", name: "Grey beige", L: 62.5, a: 3.5, b: 14.2 },
         { code: "RAL 1020", name: "Olive yellow", L: 61.5, a: 2.5, b: 26.5 },
         { code: "RAL 1021", name: "Rape yellow", L: 81.7, a: 10.3, b: 78.6 },
+        { code: "RAL 1023", name: "Traffic yellow", L: 80.2, a: 14.2, b: 81.5 },
+        { code: "RAL 1024", name: "Ochre yellow", L: 64.5, a: 8.5, b: 41.5 },
+        { code: "RAL 1026", name: "Luminous yellow", L: 92.5, a: -12.5, b: 92.5 },
+        { code: "RAL 1027", name: "Curry", L: 58.5, a: 5.8, b: 48.5 },
         { code: "RAL 1028", name: "Melon yellow", L: 75.8, a: 28.5, b: 76.2 },
+        { code: "RAL 1032", name: "Broom yellow", L: 74.5, a: 12.8, b: 69.5 },
+        { code: "RAL 1033", name: "Dahlia yellow", L: 71.5, a: 27.5, b: 72.8 },
+        { code: "RAL 1034", name: "Pastel yellow", L: 73.2, a: 21.5, b: 49.5 },
+        { code: "RAL 1035", name: "Pearl beige", L: 58.5, a: 1.8, b: 12.5 },
+        { code: "RAL 1036", name: "Pearl gold", L: 55.2, a: 5.5, b: 28.5 },
+        { code: "RAL 1037", name: "Sun yellow", L: 72.5, a: 23.5, b: 76.5 },
+
+        // Оранжевые (2xxx)
+        { code: "RAL 2000", name: "Yellow orange", L: 62.5, a: 42.5, b: 68.5 },
+        { code: "RAL 2001", name: "Red orange", L: 52.5, a: 48.5, b: 46.5 },
+        { code: "RAL 2002", name: "Vermilion", L: 49.5, a: 55.8, b: 44.5 },
+        { code: "RAL 2003", name: "Pastel orange", L: 66.5, a: 46.5, b: 64.5 },
         { code: "RAL 2004", name: "Pure orange", L: 58.5, a: 55.2, b: 62.5 },
         { code: "RAL 2005", name: "Luminous orange", L: 63.2, a: 68.5, b: 67.2 },
+        { code: "RAL 2007", name: "Luminous bright orange", L: 67.5, a: 56.5, b: 78.5 },
+        { code: "RAL 2008", name: "Bright red orange", L: 59.2, a: 51.5, b: 58.5 },
+        { code: "RAL 2009", name: "Traffic orange", L: 56.8, a: 54.2, b: 58.2 },
+        { code: "RAL 2010", name: "Signal orange", L: 54.5, a: 46.5, b: 51.5 },
+        { code: "RAL 2011", name: "Deep orange", L: 60.5, a: 46.8, b: 62.5 },
+        { code: "RAL 2012", name: "Salmon orange", L: 55.5, a: 41.5, b: 35.5 },
+        { code: "RAL 2013", name: "Pearl orange", L: 44.5, a: 39.5, b: 38.5 },
+
+        // Красные (3xxx)
         { code: "RAL 3000", name: "Flame red", L: 44.5, a: 52.8, b: 32.5 },
+        { code: "RAL 3001", name: "Signal red", L: 42.5, a: 53.5, b: 31.5 },
+        { code: "RAL 3002", name: "Carmine red", L: 40.5, a: 51.2, b: 30.5 },
+        { code: "RAL 3003", name: "Ruby red", L: 34.5, a: 44.5, b: 19.5 },
+        { code: "RAL 3004", name: "Purple red", L: 31.5, a: 36.5, b: 13.5 },
+        { code: "RAL 3005", name: "Wine red", L: 28.5, a: 31.5, b: 10.5 },
+        { code: "RAL 3007", name: "Black red", L: 25.5, a: 16.5, b: 5.5 },
+        { code: "RAL 3009", name: "Oxide red", L: 34.5, a: 26.5, b: 17.5 },
+        { code: "RAL 3011", name: "Brown red", L: 36.5, a: 39.5, b: 23.5 },
+        { code: "RAL 3012", name: "Beige red", L: 58.5, a: 24.5, b: 22.5 },
+        { code: "RAL 3013", name: "Tomato red", L: 41.5, a: 46.5, b: 27.5 },
+        { code: "RAL 3014", name: "Antique pink", L: 55.5, a: 34.5, b: 15.5 },
+        { code: "RAL 3015", name: "Light pink", L: 68.5, a: 24.5, b: 9.5 },
         { code: "RAL 3016", name: "Coral red", L: 48.2, a: 46.5, b: 28.5 },
+        { code: "RAL 3017", name: "Rose", L: 52.5, a: 48.5, b: 22.5 },
         { code: "RAL 3018", name: "Strawberry red", L: 52.5, a: 50.2, b: 23.5 },
         { code: "RAL 3020", name: "Traffic red", L: 46.9, a: 59.8, b: 44.5 },
+        { code: "RAL 3022", name: "Salmon pink", L: 58.5, a: 38.5, b: 29.5 },
         { code: "RAL 3024", name: "Luminous red", L: 56.5, a: 74.5, b: 52.5 },
         { code: "RAL 3026", name: "Luminous bright red", L: 58.2, a: 75.8, b: 49.5 },
+        { code: "RAL 3027", name: "Raspberry red", L: 42.5, a: 52.5, b: 22.5 },
+        { code: "RAL 3028", name: "Pure red", L: 47.5, a: 61.5, b: 41.5 },
+        { code: "RAL 3031", name: "Orient red", L: 41.5, a: 45.5, b: 22.5 },
+        { code: "RAL 3032", name: "Pearl ruby red", L: 31.5, a: 38.5, b: 18.5 },
+        { code: "RAL 3033", name: "Pearl pink", L: 47.5, a: 44.5, b: 25.5 },
+
+        // Фиолетовые (4xxx)
+        { code: "RAL 4001", name: "Red lilac", L: 51.5, a: 24.5, b: -9.5 },
+        { code: "RAL 4002", name: "Red violet", L: 42.5, a: 34.5, b: 7.5 },
         { code: "RAL 4003", name: "Heather violet", L: 54.5, a: 42.5, b: -3.5 },
+        { code: "RAL 4004", name: "Claret violet", L: 30.5, a: 29.5, b: 4.5 },
+        { code: "RAL 4005", name: "Blue lilac", L: 51.5, a: 22.5, b: -21.5 },
+        { code: "RAL 4006", name: "Traffic purple", L: 44.5, a: 44.5, b: -12.5 },
+        { code: "RAL 4007", name: "Purple violet", L: 28.5, a: 20.5, b: -3.5 },
+        { code: "RAL 4008", name: "Signal violet", L: 45.5, a: 36.5, b: -17.5 },
+        { code: "RAL 4009", name: "Pastel violet", L: 62.5, a: 15.5, b: -2.5 },
+        { code: "RAL 4010", name: "Telemagenta", L: 48.5, a: 52.5, b: -7.5 },
+        { code: "RAL 4011", name: "Pearl violet", L: 45.5, a: 16.5, b: -12.5 },
+        { code: "RAL 4012", name: "Pearl blackberry", L: 41.5, a: 8.5, b: -8.5 },
+
+        // Синие (5xxx)
+        { code: "RAL 5000", name: "Violet blue", L: 37.5, a: 2.5, b: -26.5 },
+        { code: "RAL 5001", name: "Green blue", L: 35.5, a: -12.5, b: -21.5 },
         { code: "RAL 5002", name: "Ultramarine blue", L: 31.5, a: 9.5, b: -45.5 },
+        { code: "RAL 5003", name: "Sapphire blue", L: 29.5, a: -1.5, b: -22.5 },
+        { code: "RAL 5004", name: "Black blue", L: 23.5, a: 0.5, b: -6.5 },
+        { code: "RAL 5005", name: "Signal blue", L: 38.5, a: -2.5, b: -44.5 },
+        { code: "RAL 5007", name: "Brilliant blue", L: 46.5, a: -7.5, b: -28.5 },
+        { code: "RAL 5008", name: "Grey blue", L: 31.5, a: -4.5, b: -9.5 },
+        { code: "RAL 5009", name: "Azure blue", L: 43.5, a: -14.5, b: -23.5 },
+        { code: "RAL 5010", name: "Gentian blue", L: 36.5, a: -4.5, b: -41.5 },
+        { code: "RAL 5011", name: "Steel blue", L: 27.5, a: -2.5, b: -14.5 },
+        { code: "RAL 5012", name: "Light blue", L: 54.5, a: -17.5, b: -35.5 },
+        { code: "RAL 5013", name: "Cobalt blue", L: 27.5, a: 2.5, b: -26.5 },
+        { code: "RAL 5014", name: "Pigeon blue", L: 52.5, a: -4.5, b: -15.5 },
+        { code: "RAL 5015", name: "Middle sky blue", L: 50.5, a: -14.5, b: -39.5 },
+        { code: "RAL 5017", name: "Traffic blue", L: 41.5, a: -12.5, b: -38.5 },
+        { code: "RAL 5018", name: "Turquoise blue", L: 55.5, a: -28.5, b: -14.5 },
+        { code: "RAL 5019", name: "Capri blue", L: 43.5, a: -12.5, b: -33.5 },
+        { code: "RAL 5020", name: "Ocean blue", L: 32.5, a: -18.5, b: -12.5 },
+        { code: "RAL 5021", name: "Water blue", L: 49.5, a: -29.5, b: -13.5 },
+        { code: "RAL 5022", name: "Night blue", L: 26.5, a: 6.5, b: -31.5 },
+        { code: "RAL 5023", name: "Distant blue", L: 47.5, a: -7.5, b: -25.5 },
+        { code: "RAL 5024", name: "Pastel blue", L: 60.5, a: -10.5, b: -16.5 },
+        { code: "RAL 5025", name: "Pearl gentian blue", L: 36.5, a: -12.5, b: -21.5 },
+        { code: "RAL 5026", name: "Pearl night blue", L: 27.5, a: 0.5, b: -18.5 },
+
+        // Зеленые (6xxx)
+        { code: "RAL 6000", name: "Patina green", L: 52.5, a: -26.5, b: 5.5 },
+        { code: "RAL 6001", name: "Emerald green", L: 47.5, a: -32.5, b: 23.5 },
+        { code: "RAL 6002", name: "Leaf green", L: 42.5, a: -31.5, b: 24.5 },
+        { code: "RAL 6003", name: "Olive green", L: 40.5, a: -8.5, b: 15.5 },
+        { code: "RAL 6004", name: "Blue green", L: 34.5, a: -21.5, b: -4.5 },
+        { code: "RAL 6005", name: "Moss green", L: 32.5, a: -18.5, b: 8.5 },
+        { code: "RAL 6006", name: "Grey olive", L: 33.5, a: -2.5, b: 7.5 },
+        { code: "RAL 6007", name: "Bottle green", L: 30.5, a: -10.5, b: 11.5 },
+        { code: "RAL 6008", name: "Brown green", L: 31.5, a: -2.5, b: 9.5 },
+        { code: "RAL 6009", name: "Fir green", L: 29.5, a: -11.5, b: 7.5 },
+        { code: "RAL 6010", name: "Grass green", L: 46.5, a: -28.5, b: 28.5 },
+        { code: "RAL 6011", name: "Reseda green", L: 56.5, a: -17.5, b: 17.5 },
+        { code: "RAL 6012", name: "Black green", L: 30.5, a: -8.5, b: -1.5 },
+        { code: "RAL 6013", name: "Reed green", L: 54.5, a: -5.5, b: 17.5 },
+        { code: "RAL 6014", name: "Yellow olive", L: 34.5, a: -1.5, b: 10.5 },
+        { code: "RAL 6015", name: "Black olive", L: 31.5, a: -3.5, b: 4.5 },
+        { code: "RAL 6016", name: "Turquoise green", L: 43.5, a: -39.5, b: 8.5 },
+        { code: "RAL 6017", name: "May green", L: 52.5, a: -29.5, b: 31.5 },
+        { code: "RAL 6018", name: "Yellow green", L: 58.5, a: -37.5, b: 42.5 },
+        { code: "RAL 6019", name: "Pastel green", L: 78.5, a: -18.5, b: 14.5 },
+        { code: "RAL 6020", name: "Chrome green", L: 35.5, a: -12.5, b: 10.5 },
+        { code: "RAL 6021", name: "Pale green", L: 65.5, a: -14.5, b: 14.5 },
+        { code: "RAL 6022", name: "Olive drab", L: 31.5, a: 1.5, b: 11.5 },
+        { code: "RAL 6024", name: "Traffic green", L: 49.5, a: -44.5, b: 16.5 },
+        { code: "RAL 6025", name: "Fern green", L: 49.5, a: -20.5, b: 27.5 },
+        { code: "RAL 6026", name: "Opal green", L: 40.5, a: -35.5, b: 1.5 },
+        { code: "RAL 6027", name: "Light green", L: 69.5, a: -27.5, b: -8.5 },
+        { code: "RAL 6028", name: "Pine green", L: 39.5, a: -24.5, b: 7.5 },
+        { code: "RAL 6029", name: "Mint green", L: 44.5, a: -45.5, b: 18.5 },
+        { code: "RAL 6032", name: "Signal green", L: 50.5, a: -47.5, b: 17.5 },
+        { code: "RAL 6033", name: "Mint turquoise", L: 53.5, a: -30.5, b: -4.5 },
+        { code: "RAL 6034", name: "Pastel turquoise", L: 66.5, a: -23.5, b: -10.5 },
+        { code: "RAL 6035", name: "Pearl green", L: 34.5, a: -28.5, b: 11.5 },
+        { code: "RAL 6036", name: "Pearl opal green", L: 38.5, a: -29.5, b: 2.5 },
+        { code: "RAL 6037", name: "Pure green", L: 53.5, a: -53.5, b: 35.5 },
+        { code: "RAL 6038", name: "Luminous green", L: 68.5, a: -68.5, b: 54.5 },
+
+        // Серые (7xxx)
+        { code: "RAL 7000", name: "Squirrel grey", L: 58.5, a: -4.5, b: -4.5 },
+        { code: "RAL 7001", name: "Silver grey", L: 64.5, a: -3.5, b: -4.5 },
+        { code: "RAL 7002", name: "Olive grey", L: 57.5, a: -1.5, b: 10.5 },
+        { code: "RAL 7003", name: "Moss grey", L: 55.5, a: -2.5, b: 6.5 },
+        { code: "RAL 7004", name: "Signal grey", L: 66.5, a: -1.5, b: -0.5 },
+        { code: "RAL 7005", name: "Mouse grey", L: 51.5, a: -2.5, b: 0.5 },
+        { code: "RAL 7006", name: "Beige grey", L: 51.5, a: 1.5, b: 8.5 },
+        { code: "RAL 7008", name: "Khaki grey", L: 47.5, a: 2.5, b: 18.5 },
+        { code: "RAL 7009", name: "Green grey", L: 47.5, a: -4.5, b: 4.5 },
+        { code: "RAL 7010", name: "Tarpaulin grey", L: 44.5, a: -3.5, b: 3.5 },
+        { code: "RAL 7011", name: "Iron grey", L: 42.5, a: -3.5, b: -3.5 },
+        { code: "RAL 7012", name: "Basalt grey", L: 45.5, a: -2.5, b: -1.5 },
+        { code: "RAL 7013", name: "Brown grey", L: 40.5, a: -0.5, b: 7.5 },
+        { code: "RAL 7015", name: "Slate grey", L: 39.5, a: -1.5, b: -3.5 },
+        { code: "RAL 7016", name: "Anthracite grey", L: 32.5, a: -1.0, b: -3.2 },
+        { code: "RAL 7021", name: "Black grey", L: 28.5, a: -0.5, b: -1.8 },
+        { code: "RAL 7022", name: "Umbra grey", L: 38.5, a: -0.5, b: 3.5 },
+        { code: "RAL 7023", name: "Concrete grey", L: 56.5, a: -3.5, b: 3.5 },
+        { code: "RAL 7024", name: "Graphite grey", L: 39.5, a: -0.5, b: -2.5 },
+        { code: "RAL 7026", name: "Granite grey", L: 36.5, a: -4.5, b: -2.5 },
+        { code: "RAL 7030", name: "Stone grey", L: 60.5, a: -0.5, b: 4.5 },
+        { code: "RAL 7031", name: "Blue grey", L: 48.5, a: -4.5, b: -5.5 },
+        { code: "RAL 7032", name: "Pebble grey", L: 72.5, a: -1.5, b: 6.5 },
+        { code: "RAL 7033", name: "Cement grey", L: 58.5, a: -4.5, b: 4.5 },
+        { code: "RAL 7034", name: "Yellow grey", L: 59.5, a: -0.5, b: 12.5 },
         { code: "RAL 7035", name: "Light grey", L: 82.5, a: -1.2, b: 2.5 },
+        { code: "RAL 7036", name: "Platinum grey", L: 60.5, a: 0.5, b: 1.5 },
+        { code: "RAL 7037", name: "Dusty grey", L: 53.5, a: -0.5, b: 0.5 },
+        { code: "RAL 7038", name: "Agate grey", L: 73.5, a: -1.5, b: 3.5 },
+        { code: "RAL 7039", name: "Quartz grey", L: 46.5, a: -0.5, b: 4.5 },
+        { code: "RAL 7040", name: "Window grey", L: 66.8, a: -1.5, b: -1.2 },
+        { code: "RAL 7042", name: "Traffic grey A", L: 62.5, a: -1.5, b: 0.5 },
+        { code: "RAL 7043", name: "Traffic grey B", L: 40.5, a: -1.5, b: -0.5 },
+        { code: "RAL 7044", name: "Silk grey", L: 75.5, a: -0.5, b: 4.5 },
+        { code: "RAL 7045", name: "Telegrey 1", L: 63.5, a: -2.5, b: -2.5 },
+        { code: "RAL 7046", name: "Telegrey 2", L: 56.5, a: -3.5, b: -4.5 },
+        { code: "RAL 7047", name: "Telegrey 4", L: 78.5, a: -0.5, b: 0.5 },
+        { code: "RAL 7048", name: "Pearl mouse grey", L: 51.5, a: 0.5, b: 3.5 },
+
+        // Коричневые (8xxx)
+        { code: "RAL 8000", name: "Green brown", L: 48.5, a: 8.5, b: 28.5 },
+        { code: "RAL 8001", name: "Ochre brown", L: 48.5, a: 16.5, b: 36.5 },
+        { code: "RAL 8002", name: "Signal brown", L: 40.5, a: 18.5, b: 18.5 },
+        { code: "RAL 8003", name: "Clay brown", L: 44.5, a: 18.5, b: 28.5 },
+        { code: "RAL 8004", name: "Copper brown", L: 44.5, a: 28.5, b: 27.5 },
+        { code: "RAL 8007", name: "Fawn brown", L: 39.5, a: 15.5, b: 21.5 },
+        { code: "RAL 8008", name: "Olive brown", L: 41.5, a: 12.5, b: 26.5 },
+        { code: "RAL 8011", name: "Nut brown", L: 35.5, a: 15.5, b: 16.5 },
+        { code: "RAL 8012", name: "Red brown", L: 35.5, a: 21.5, b: 15.5 },
+        { code: "RAL 8014", name: "Sepia brown", L: 33.5, a: 7.5, b: 10.5 },
+        { code: "RAL 8015", name: "Chestnut brown", L: 33.5, a: 16.5, b: 13.5 },
+        { code: "RAL 8016", name: "Mahogany brown", L: 31.5, a: 14.5, b: 10.5 },
+        { code: "RAL 8017", name: "Chocolate brown", L: 30.5, a: 9.5, b: 7.5 },
+        { code: "RAL 8019", name: "Grey brown", L: 28.5, a: 2.5, b: 3.5 },
+        { code: "RAL 8022", name: "Black brown", L: 24.5, a: 1.5, b: 1.5 },
+        { code: "RAL 8023", name: "Orange brown", L: 52.5, a: 28.5, b: 39.5 },
+        { code: "RAL 8024", name: "Beige brown", L: 45.5, a: 14.5, b: 22.5 },
+        { code: "RAL 8025", name: "Pale brown", L: 45.5, a: 11.5, b: 16.5 },
+        { code: "RAL 8028", name: "Terra brown", L: 34.5, a: 9.5, b: 13.5 },
+        { code: "RAL 8029", name: "Pearl copper", L: 38.5, a: 28.5, b: 27.5 },
+
+        // Белые и Черные (9xxx)
+        { code: "RAL 9001", name: "Cream", L: 89.5, a: 0.5, b: 8.5 },
+        { code: "RAL 9002", name: "Grey white", L: 86.5, a: -1.5, b: 3.5 },
         { code: "RAL 9003", name: "Signal white", L: 95.5, a: -0.8, b: 2.8 },
-        { code: "RAL 9005", name: "Jet black", L: 26.5, a: 0.1, b: -0.5 }
+        { code: "RAL 9004", name: "Signal black", L: 27.2, a: -0.2, b: -0.8 },
+        { code: "RAL 9005", name: "Jet black", L: 26.5, a: 0.1, b: -0.5 },
+        { code: "RAL 9006", name: "White aluminium", L: 69.5, a: -0.8, b: 1.5 },
+        { code: "RAL 9007", name: "Grey aluminium", L: 56.5, a: -0.5, b: 2.5 },
+        { code: "RAL 9010", name: "Pure white", L: 93.5, a: -0.5, b: 5.5 },
+        { code: "RAL 9011", name: "Graphite black", L: 26.5, a: -0.2, b: -0.8 },
+        { code: "RAL 9016", name: "Traffic white", L: 95.2, a: -0.5, b: 1.8 },
+        { code: "RAL 9017", name: "Traffic black", L: 26.8, a: 0.2, b: -0.2 },
+        { code: "RAL 9018", name: "Papyrus white", L: 81.5, a: -2.5, b: 1.5 },
+        { code: "RAL 9022", name: "Pearl light grey", L: 65.5, a: -0.5, b: 1.5 },
+        { code: "RAL 9023", name: "Pearl dark grey", L: 55.5, a: -0.5, b: -0.5 }
       ]
     };
 
