@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>RAL Colorimeter — Full Spectral 216</title>
+  <title>RAL Colorimeter — Fast Trainer & Spectral Match</title>
   <style>
     :root {
       --bg: #0f172a;
@@ -14,6 +14,7 @@
       --border: #334155;
       --success: #22c55e;
       --danger: #ef4444;
+      --warning: #f59e0b;
     }
 
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
@@ -29,6 +30,7 @@
     .btn:hover { background: #334155; }
     .btn-primary { background: #0284c7; border-color: #38bdf8; }
     .btn-primary:hover { background: #0369a1; }
+    .btn-warning { background: rgba(245, 158, 11, 0.2); border-color: var(--warning); color: var(--warning); }
     .btn-danger { background: rgba(239, 68, 68, 0.2); border-color: var(--danger); color: var(--danger); }
 
     .controls { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 0.75rem; }
@@ -39,6 +41,12 @@
     .color-name { font-size: 1.1rem; color: var(--text-dim); margin-bottom: 0.75rem; }
     .color-metrics { font-size: 0.9rem; color: var(--text-dim); display: flex; gap: 1.5rem; }
 
+    .wizard-card { background: rgba(56, 189, 248, 0.05); border: 2px dashed var(--accent); border-radius: 12px; padding: 1.25rem; display: flex; flex-direction: column; gap: 1rem; }
+    .wizard-header { display: flex; justify-content: space-between; align-items: center; }
+    .wizard-step-box { display: flex; align-items: center; gap: 1.25rem; background: var(--card-bg); border: 1px solid var(--border); padding: 1rem; border-radius: 8px; }
+    .wizard-target-color { width: 50px; height: 50px; border-radius: 6px; border: 1px solid var(--border); }
+    .wizard-actions { display: flex; gap: 0.75rem; flex-wrap: wrap; }
+
     .channels-card { background: var(--card-bg); border: 1px solid var(--border); border-radius: 12px; padding: 1.25rem; }
     .channels-card h3 { font-size: 1rem; margin-bottom: 1rem; color: var(--text-dim); }
     .channel-bars { display: flex; justify-content: space-between; align-items: flex-end; height: 140px; gap: 8px; padding-top: 10px; }
@@ -48,14 +56,15 @@
     .channel-label { font-size: 0.75rem; margin-top: 0.4rem; color: var(--text-dim); }
     .channel-val { font-size: 0.7rem; margin-bottom: 0.25rem; }
 
-    .learn-box { background: rgba(56, 189, 248, 0.05); border: 1px dashed var(--accent); border-radius: 12px; padding: 1rem; display: flex; gap: 0.75rem; align-items: center; flex-wrap: wrap; }
-    .learn-box select { background: var(--card-bg); color: var(--text); border: 1px solid var(--border); padding: 0.5rem; border-radius: 6px; flex: 1; min-width: 250px; }
+    #codeModal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); justify-content: center; align-items: center; padding: 1.5rem; z-index: 100; }
+    .modal-content { background: var(--card-bg); border: 1px solid var(--border); border-radius: 12px; width: 100%; max-width: 750px; max-height: 85vh; display: flex; flex-direction: column; padding: 1.5rem; gap: 1rem; }
+    textarea { width: 100%; height: 400px; background: #0f172a; color: #a5f3fc; border: 1px solid var(--border); border-radius: 6px; padding: 0.75rem; font-family: monospace; font-size: 0.85rem; resize: none; }
   </style>
 </head>
 <body>
   <div class="container">
     <header>
-      <h1>RAL Colorimeter PRO (216 Colors)</h1>
+      <h1>RAL Colorimeter PRO</h1>
       <div id="bleStatus" class="status-badge">Отключено</div>
     </header>
 
@@ -66,6 +75,37 @@
       <button id="btnCalBlack" class="btn btn-danger" onclick="sendCommand('CAL_BLACK')" disabled>Калибр. Черный</button>
     </div>
 
+    <!-- МАСТЕР БЫСТРОГО ОБУЧЕНИЯ ПО ВЕЕРУ -->
+    <div class="wizard-card">
+      <div class="wizard-header">
+        <h3 style="color: var(--accent);">Конвейерное обучение веера (Fast Wizard)</h3>
+        <div>
+          <label style="font-size: 0.85rem; color: var(--text-dim);">Набор: </label>
+          <select id="wizardMode" onchange="initWizardQueue()" style="background: var(--card-bg); color: var(--text); border: 1px solid var(--border); padding: 0.3rem; border-radius: 4px;">
+            <option value="problematic">Только проблемные (20 шт)</option>
+            <option value="all">Полный веер (все 216 шт)</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="wizard-step-box">
+        <div id="wizColorBox" class="wizard-target-color" style="background-color: #0A0A0D;"></div>
+        <div style="flex: 1;">
+          <div style="font-size: 0.8rem; color: var(--text-dim);" id="wizProgress">Цвет 1 из 20</div>
+          <div style="font-size: 1.3rem; font-weight: 700;" id="wizTargetText">Прижмите к RAL 9005 (Jet black)</div>
+          <div style="font-size: 0.85rem; color: var(--accent);">Прижмите датчик и нажмите кнопку на приборе</div>
+        </div>
+      </div>
+
+      <div class="wizard-actions">
+        <button class="btn btn-primary" onclick="wizardStepManualScan()">Замер & Запомнить</button>
+        <button class="btn" onclick="wizardSkip()">Пропустить цвет</button>
+        <button class="btn btn-warning" onclick="generateCppArray()">Сгенерировать C++ массив</button>
+        <button class="btn btn-danger" onclick="resetCustomCalibrations()">Сброс памяти</button>
+      </div>
+    </div>
+
+    <!-- ТЕКУЩИЙ РЕЗУЛЬТАТ -->
     <div class="result-card">
       <div id="colorBox" class="color-preview" style="background-color: #334155;"></div>
       <div class="color-details">
@@ -82,18 +122,24 @@
       <h3>Спектральный отклик (Rλ: F1 415nm — F8 680nm)</h3>
       <div class="channel-bars" id="barsContainer"></div>
     </div>
+  </div>
 
-    <div class="learn-box">
-      <span style="font-size: 0.9rem; font-weight: 500;">Обучение веера:</span>
-      <select id="trainSelect"></select>
-      <button class="btn btn-primary" onclick="saveCurrentSampleAsRAL()">Запомнить замер</button>
-      <button class="btn" onclick="resetCustomCalibrations()">Сбросить память</button>
+  <!-- МОДАЛЬНОЕ ОКНО С C++ КОДОМ -->
+  <div id="codeModal">
+    <div class="modal-content">
+      <h3 style="color: var(--accent);">Готовый C++ массив для прошивки ESP32</h3>
+      <p style="font-size: 0.85rem; color: var(--text-dim);">Скопируйте этот массив и вставьте его в прошивку для 100% автономной работы без компьютера.</p>
+      <textarea id="cppCodeText" readonly></textarea>
+      <div style="display: flex; justify-content: flex-end; gap: 0.75rem;">
+        <button class="btn btn-primary" onclick="copyCppCode()">Скопировать код</button>
+        <button class="btn" onclick="document.getElementById('codeModal').style.display='none'">Закрыть</button>
+      </div>
     </div>
   </div>
 
   <script>
     // =========================================================================
-    // БАЗА 216 ЦВЕТОВ RAL CLASSIC СИНТЕЗИРОВАННАЯ ПОД СПЕКТР AS7341 (F1..F8)
+    // БАЗА 216 ЦВЕТОВ RAL CLASSIC
     // =========================================================================
     const fullRalClassic = [
       { ral: "RAL 1000", name: "Green beige", hex: "#CEB98E", refl: [0.55, 0.52, 0.54, 0.58, 0.65, 0.68, 0.68, 0.67] },
@@ -311,6 +357,16 @@
       { ral: "RAL 9023", name: "Pearl dark grey", hex: "#797B7A", refl: [0.44, 0.45, 0.46, 0.46, 0.47, 0.47, 0.47, 0.46] }
     ];
 
+    // Ключевой проблемный набор для экспресс-калибровки за 3 минуты
+    const problematicRALs = [
+      "RAL 9005", "RAL 9011", "RAL 9004", "RAL 7021",
+      "RAL 9003", "RAL 9016", "RAL 9001", "RAL 1015",
+      "RAL 5005", "RAL 5010", "RAL 5002",
+      "RAL 8017", "RAL 8019",
+      "RAL 2004", "RAL 3016", "RAL 3015", "RAL 3020",
+      "RAL 6018", "RAL 7040", "RAL 9006"
+    ];
+
     function getDatabase() {
       const stored = localStorage.getItem("custom_ral_spectral_db_v216");
       if (stored) {
@@ -322,13 +378,122 @@
     let activeDatabase = getDatabase();
     let lastRefl = null;
 
-    // Заполнение выпадающего списка всеми 216 цветами
-    const trainSelect = document.getElementById("trainSelect");
-    trainSelect.innerHTML = fullRalClassic.map(c => `
-      <option value="${c.ral}|${c.name}">${c.ral} (${c.name})</option>
-    `).join("");
+    // Звуковой сигнал завершения замера
+    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    function playBeep() {
+      if (audioCtx.state === 'suspended') audioCtx.resume();
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.type = "sine";
+      osc.frequency.setValueAtTime(880, audioCtx.currentTime); // нота Ля (880 Гц)
+      gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.15);
+      osc.connect(gain);
+      gain.connect(audioCtx.destination);
+      osc.start();
+      osc.stop(audioCtx.currentTime + 0.15);
+    }
 
-    // Отрисовка графических колонок каналов F1..F8
+    // =========================================================================
+    // МАСТЕР КОНВЕЙЕРНОГО ОБУЧЕНИЯ (WIZARD QUEUE)
+    // =========================================================================
+    let wizardQueue = [];
+    let wizardIdx = 0;
+
+    function initWizardQueue() {
+      const mode = document.getElementById("wizardMode").value;
+      if (mode === "problematic") {
+        wizardQueue = fullRalClassic.filter(c => problematicRALs.includes(c.ral));
+      } else {
+        wizardQueue = [...fullRalClassic];
+      }
+      wizardIdx = 0;
+      updateWizardUI();
+    }
+
+    function updateWizardUI() {
+      if (wizardIdx >= wizardQueue.length) {
+        document.getElementById("wizProgress").innerText = "Обучение завершено!";
+        document.getElementById("wizTargetText").innerText = "Все цвета очереди успешно откалиброваны!";
+        document.getElementById("wizColorBox").style.backgroundColor = "#22c55e";
+        return;
+      }
+      const item = wizardQueue[wizardIdx];
+      document.getElementById("wizProgress").innerText = `Цвет ${wizardIdx + 1} из ${wizardQueue.length}`;
+      document.getElementById("wizTargetText").innerText = `Прижмите к ${item.ral} (${item.name})`;
+      document.getElementById("wizColorBox").style.backgroundColor = item.hex || "#334155";
+    }
+
+    function wizardSaveAndNext(measuredRefl) {
+      if (wizardIdx >= wizardQueue.length) return;
+      const current = wizardQueue[wizardIdx];
+
+      // Сохраняем спектральный отпечаток текущего цвета
+      const idx = activeDatabase.findIndex(x => x.ral === current.ral);
+      if (idx >= 0) {
+        activeDatabase[idx].refl = [...measuredRefl];
+      }
+
+      localStorage.setItem("custom_ral_spectral_db_v216", JSON.stringify(activeDatabase));
+      playBeep();
+
+      wizardIdx++;
+      updateWizardUI();
+    }
+
+    function wizardStepManualScan() {
+      if (!lastRefl) {
+        sendCommand('SCAN');
+        return;
+      }
+      wizardSaveAndNext(lastRefl);
+    }
+
+    function wizardSkip() {
+      wizardIdx++;
+      updateWizardUI();
+    }
+
+    function resetCustomCalibrations() {
+      if (confirm("Сбросить пользовательские спектры к синтезированным эталонам по умолчанию?")) {
+        localStorage.removeItem("custom_ral_spectral_db_v216");
+        activeDatabase = [...fullRalClassic];
+        initWizardQueue();
+        alert("Память сброшена к заводским эталонам.");
+      }
+    }
+
+    // =========================================================================
+    // ГЕНЕРАТОР C++ КОДА ДЛЯ ESP32
+    // =========================================================================
+    function generateCppArray() {
+      let cpp = "// ============================================================================\n";
+      cpp += "// КАЛИБРОВАННАЯ СПЕКТРАЛЬНАЯ БАЗА RAL CLASSIC ДЛЯ ESP32 (F1..F8)\n";
+      cpp += "// ============================================================================\n";
+      cpp += "struct SpectralEntry {\n  const char* ral;\n  const char* name;\n  float refl[8];\n};\n\n";
+      cpp += "const SpectralEntry RAL_SPECTRAL_DB[216] PROGMEM = {\n";
+
+      activeDatabase.forEach((item, i) => {
+        const r = item.refl.map(v => v.toFixed(4) + "f").join(", ");
+        cpp += `  { "${item.ral}", "${item.name}", { ${r} } }${i < activeDatabase.length - 1 ? "," : ""}\n`;
+      });
+
+      cpp += "};\n";
+
+      document.getElementById("cppCodeText").value = cpp;
+      document.getElementById("codeModal").style.display = "flex";
+    }
+
+    function copyCppCode() {
+      const copyText = document.getElementById("cppCodeText");
+      copyText.select();
+      document.execCommand("copy");
+      alert("C++ код скопирован в буфер обмена!");
+    }
+
+    // =========================================================================
+    // ОТРИСОВКА И ПРЯМОЙ СПЕКТРАЛЬНЫЙ ПОИСК
+    // =========================================================================
     const channelNames = ["F1 415", "F2 445", "F3 480", "F4 515", "F5 555", "F6 590", "F7 630", "F8 680"];
     const barsContainer = document.getElementById("barsContainer");
     barsContainer.innerHTML = channelNames.map((name, i) => `
@@ -339,9 +504,6 @@
       </div>
     `).join("");
 
-    // =========================================================================
-    // ПРЯМОЙ СПЕКТРАЛЬНЫЙ ПОИСК (WEIGHTED EUCLIDEAN SPECTRUM DISTANCE)
-    // =========================================================================
     function matchSpectralFingerprint(measuredRefl) {
       let bestMatch = null;
       let minDistance = Infinity;
@@ -360,32 +522,6 @@
         }
       }
       return { match: bestMatch, distance: minDistance };
-    }
-
-    function saveCurrentSampleAsRAL() {
-      if (!lastRefl) {
-        alert("Сначала сделайте замер образца!");
-        return;
-      }
-      const [ral, name] = trainSelect.value.split("|");
-      const idx = activeDatabase.findIndex(x => x.ral === ral);
-      if (idx >= 0) {
-        activeDatabase[idx].refl = [...lastRefl];
-      } else {
-        activeDatabase.push({ ral, name, hex: "#888888", refl: [...lastRefl] });
-      }
-
-      localStorage.setItem("custom_ral_spectral_db_v216", JSON.stringify(activeDatabase));
-      alert(`Спектральный профиль ${ral} сохранён в память браузера!`);
-      updateUIWithMatch(lastRefl, 100);
-    }
-
-    function resetCustomCalibrations() {
-      if (confirm("Сбросить пользовательские спектры к синтезированным эталонам по умолчанию?")) {
-        localStorage.removeItem("custom_ral_spectral_db_v216");
-        activeDatabase = [...fullRalClassic];
-        alert("Память сброшена к заводским эталонам.");
-      }
     }
 
     // =========================================================================
@@ -423,6 +559,8 @@
         document.getElementById("btnScan").disabled = false;
         document.getElementById("btnCalWhite").disabled = false;
         document.getElementById("btnCalBlack").disabled = false;
+
+        initWizardQueue();
       } catch (err) {
         console.error(err);
         document.getElementById("bleStatus").innerText = "Ошибка";
@@ -460,6 +598,11 @@
               if (data.refl) {
                 lastRefl = data.refl;
                 updateUIWithMatch(data.refl, data.sigQual);
+
+                // Если активен мастер обучения — сразу фиксируем и переключаем на следующий
+                if (wizardIdx < wizardQueue.length) {
+                  wizardSaveAndNext(data.refl);
+                }
               }
             } catch (e) {
               console.error("JSON parse error:", e);
@@ -486,6 +629,9 @@
         document.getElementById("sigQual").innerText = `${quality || 100}%`;
       }
     }
+
+    // Инициализация при загрузке
+    initWizardQueue();
   </script>
 </body>
 </html>
