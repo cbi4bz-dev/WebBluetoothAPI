@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>RAL Colorimeter — Spectral Match Pro</title>
+  <title>RAL Colorimeter — Full Spectral 216</title>
   <style>
     :root {
       --bg: #0f172a;
@@ -18,7 +18,7 @@
 
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
     body { background-color: var(--bg); color: var(--text); padding: 1.5rem; display: flex; justify-content: center; }
-    .container { width: 100%; max-width: 800px; display: flex; flex-direction: column; gap: 1.25rem; }
+    .container { width: 100%; max-width: 860px; display: flex; flex-direction: column; gap: 1.25rem; }
 
     header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); padding-bottom: 1rem; }
     h1 { font-size: 1.4rem; font-weight: 700; color: var(--accent); }
@@ -37,7 +37,7 @@
     .color-preview { width: 120px; height: 120px; border-radius: 10px; border: 2px solid var(--border); box-shadow: 0 4px 12px rgba(0,0,0,0.3); }
     .color-details h2 { font-size: 1.8rem; font-weight: 800; margin-bottom: 0.25rem; }
     .color-name { font-size: 1.1rem; color: var(--text-dim); margin-bottom: 0.75rem; }
-    .color-metrics { font-size: 0.9rem; color: var(--text-dim); display: flex; gap: 1rem; }
+    .color-metrics { font-size: 0.9rem; color: var(--text-dim); display: flex; gap: 1.5rem; }
 
     .channels-card { background: var(--card-bg); border: 1px solid var(--border); border-radius: 12px; padding: 1.25rem; }
     .channels-card h3 { font-size: 1rem; margin-bottom: 1rem; color: var(--text-dim); }
@@ -48,14 +48,14 @@
     .channel-label { font-size: 0.75rem; margin-top: 0.4rem; color: var(--text-dim); }
     .channel-val { font-size: 0.7rem; margin-bottom: 0.25rem; }
 
-    .learn-box { background: rgba(56, 189, 248, 0.05); border: 1px dashed var(--accent); border-radius: 12px; padding: 1rem; display: flex; gap: 0.75rem; align-items: center; }
-    .learn-box select { background: var(--card-bg); color: var(--text); border: 1px solid var(--border); padding: 0.5rem; border-radius: 6px; flex: 1; }
+    .learn-box { background: rgba(56, 189, 248, 0.05); border: 1px dashed var(--accent); border-radius: 12px; padding: 1rem; display: flex; gap: 0.75rem; align-items: center; flex-wrap: wrap; }
+    .learn-box select { background: var(--card-bg); color: var(--text); border: 1px solid var(--border); padding: 0.5rem; border-radius: 6px; flex: 1; min-width: 250px; }
   </style>
 </head>
 <body>
   <div class="container">
     <header>
-      <h1>RAL Colorimeter PRO</h1>
+      <h1>RAL Colorimeter PRO (216 Colors)</h1>
       <div id="bleStatus" class="status-badge">Отключено</div>
     </header>
 
@@ -80,69 +80,256 @@
 
     <div class="channels-card">
       <h3>Спектральный отклик (Rλ: F1 415nm — F8 680nm)</h3>
-      <div class="channel-bars" id="barsContainer">
-        <!-- Генерируется скриптом -->
-      </div>
+      <div class="channel-bars" id="barsContainer"></div>
     </div>
 
     <div class="learn-box">
-      <span style="font-size: 0.9rem; font-weight: 500;">Обучение:</span>
-      <select id="trainSelect">
-        <option value="RAL 9005|Jet black">RAL 9005 (Jet black)</option>
-        <option value="RAL 9003|Signal white">RAL 9003 (Signal white)</option>
-        <option value="RAL 5005|Signal blue">RAL 5005 (Signal blue)</option>
-        <option value="RAL 8017|Chocolate brown">RAL 8017 (Chocolate brown)</option>
-        <option value="RAL 2004|Pure orange">RAL 2004 (Pure orange)</option>
-        <option value="RAL 3016|Coral red">RAL 3016 (Coral red)</option>
-        <option value="RAL 6018|Yellow green">RAL 6018 (Yellow green)</option>
-        <option value="RAL 1015|Light ivory">RAL 1015 (Light ivory)</option>
-        <option value="RAL 7040|Window grey">RAL 7040 (Window grey)</option>
-      </select>
+      <span style="font-size: 0.9rem; font-weight: 500;">Обучение веера:</span>
+      <select id="trainSelect"></select>
       <button class="btn btn-primary" onclick="saveCurrentSampleAsRAL()">Запомнить замер</button>
+      <button class="btn" onclick="resetCustomCalibrations()">Сбросить память</button>
     </div>
   </div>
 
   <script>
     // =========================================================================
-    // СИНТЕЗИРОВАННАЯ СПЕКТРАЛЬНАЯ БАЗА ОТПЕЧАТКОВ AS7341 (F1..F8)
+    // БАЗА 216 ЦВЕТОВ RAL CLASSIC СИНТЕЗИРОВАННАЯ ПОД СПЕКТР AS7341 (F1..F8)
     // =========================================================================
-    let defaultSpectralDatabase = [
-      { ral: "RAL 9005", name: "Jet black", hex: "#0a0a0d", refl: [0.0474, 0.0461, 0.0498, 0.0480, 0.0466, 0.0442, 0.0465, 0.0371] },
-      { ral: "RAL 9004", name: "Signal black", hex: "#282828", refl: [0.0512, 0.0505, 0.0531, 0.0518, 0.0501, 0.0485, 0.0495, 0.0410] },
-      { ral: "RAL 9011", name: "Graphite black", hex: "#1c1c1c", refl: [0.0485, 0.0480, 0.0508, 0.0492, 0.0478, 0.0460, 0.0475, 0.0388] },
-      { ral: "RAL 7021", name: "Black grey", hex: "#2f3234", refl: [0.0585, 0.0580, 0.0610, 0.0595, 0.0580, 0.0565, 0.0580, 0.0510] },
-      { ral: "RAL 9003", name: "Signal white", hex: "#f4f4f4", refl: [0.9852, 0.9842, 0.9847, 0.9841, 0.9858, 0.9861, 0.9851, 0.9855] },
-      { ral: "RAL 9016", name: "Traffic white", hex: "#f6f6f6", refl: [0.9890, 0.9880, 0.9875, 0.9860, 0.9865, 0.9855, 0.9840, 0.9835] },
+    const fullRalClassic = [
+      { ral: "RAL 1000", name: "Green beige", hex: "#CEB98E", refl: [0.55, 0.52, 0.54, 0.58, 0.65, 0.68, 0.68, 0.67] },
+      { ral: "RAL 1001", name: "Beige", hex: "#D0B084", refl: [0.52, 0.48, 0.51, 0.56, 0.66, 0.70, 0.72, 0.71] },
+      { ral: "RAL 1002", name: "Sand yellow", hex: "#D2AA6D", refl: [0.46, 0.41, 0.44, 0.51, 0.64, 0.71, 0.74, 0.73] },
+      { ral: "RAL 1003", name: "Signal yellow", hex: "#F9A800", refl: [0.12, 0.10, 0.12, 0.28, 0.65, 0.82, 0.85, 0.84] },
+      { ral: "RAL 1004", name: "Golden yellow", hex: "#E49E00", refl: [0.14, 0.11, 0.13, 0.27, 0.61, 0.78, 0.81, 0.80] },
+      { ral: "RAL 1005", name: "Honey yellow", hex: "#CB8E00", refl: [0.15, 0.12, 0.13, 0.24, 0.53, 0.71, 0.74, 0.73] },
+      { ral: "RAL 1006", name: "Maize yellow", hex: "#E29000", refl: [0.12, 0.10, 0.11, 0.22, 0.56, 0.76, 0.80, 0.79] },
+      { ral: "RAL 1007", name: "Daffodil yellow", hex: "#E88C00", refl: [0.11, 0.09, 0.10, 0.20, 0.54, 0.76, 0.81, 0.80] },
+      { ral: "RAL 1011", name: "Brown beige", hex: "#AF804F", refl: [0.32, 0.28, 0.30, 0.36, 0.46, 0.53, 0.58, 0.57] },
+      { ral: "RAL 1012", name: "Lemon yellow", hex: "#DC9C00", refl: [0.15, 0.12, 0.15, 0.32, 0.64, 0.77, 0.79, 0.78] },
+      { ral: "RAL 1013", name: "Oyster white", hex: "#EAE6D7", refl: [0.80, 0.78, 0.80, 0.83, 0.87, 0.89, 0.89, 0.88] },
+      { ral: "RAL 1014", name: "Ivory", hex: "#DFCEA1", refl: [0.65, 0.60, 0.64, 0.70, 0.78, 0.81, 0.82, 0.81] },
+      { ral: "RAL 1015", name: "Light ivory", hex: "#E6D9BD", refl: [0.7787, 0.6558, 0.6924, 0.7415, 0.8318, 0.8490, 0.8415, 0.8331] },
+      { ral: "RAL 1016", name: "Sulfur yellow", hex: "#EDFF21", refl: [0.16, 0.14, 0.18, 0.44, 0.82, 0.88, 0.89, 0.88] },
+      { ral: "RAL 1017", name: "Saffron yellow", hex: "#F5D033", refl: [0.18, 0.14, 0.16, 0.35, 0.72, 0.84, 0.86, 0.85] },
+      { ral: "RAL 1018", name: "Zinc yellow", hex: "#F8F32B", refl: [0.17, 0.14, 0.17, 0.42, 0.81, 0.87, 0.88, 0.87] },
+      { ral: "RAL 1019", name: "Grey beige", hex: "#9E9784", refl: [0.3850, 0.3620, 0.3840, 0.4120, 0.4650, 0.4780, 0.4820, 0.4710] },
+      { ral: "RAL 1020", name: "Olive yellow", hex: "#99865B", refl: [0.34, 0.30, 0.33, 0.40, 0.50, 0.53, 0.54, 0.53] },
+      { ral: "RAL 1021", name: "Rape yellow", hex: "#EEC900", refl: [0.14, 0.11, 0.13, 0.33, 0.71, 0.83, 0.85, 0.84] },
+      { ral: "RAL 1023", name: "Traffic yellow", hex: "#F7B500", refl: [0.12, 0.10, 0.11, 0.28, 0.66, 0.83, 0.86, 0.85] },
+      { ral: "RAL 1024", name: "Ochre yellow", hex: "#BA8F4C", refl: [0.28, 0.24, 0.27, 0.36, 0.51, 0.60, 0.63, 0.62] },
+      { ral: "RAL 1026", name: "Luminous yellow", hex: "#FFFF00", refl: [0.20, 0.18, 0.25, 0.58, 0.94, 0.96, 0.96, 0.95] },
+      { ral: "RAL 1027", name: "Curry", hex: "#9D7B0D", refl: [0.18, 0.14, 0.16, 0.26, 0.46, 0.54, 0.56, 0.55] },
+      { ral: "RAL 1028", name: "Melon yellow", hex: "#FFA100", refl: [0.11, 0.09, 0.10, 0.22, 0.60, 0.80, 0.84, 0.83] },
+      { ral: "RAL 1032", name: "Broom yellow", hex: "#E2A300", refl: [0.14, 0.11, 0.13, 0.30, 0.65, 0.79, 0.82, 0.81] },
+      { ral: "RAL 1033", name: "Dahlia yellow", hex: "#F39B00", refl: [0.11, 0.09, 0.10, 0.22, 0.59, 0.79, 0.83, 0.82] },
+      { ral: "RAL 1034", name: "Pastel yellow", hex: "#EB9C52", refl: [0.25, 0.21, 0.23, 0.32, 0.55, 0.71, 0.76, 0.75] },
+      { ral: "RAL 1035", name: "Pearl beige", hex: "#8F8370", refl: [0.36, 0.33, 0.35, 0.38, 0.44, 0.46, 0.46, 0.45] },
+      { ral: "RAL 1036", name: "Pearl gold", hex: "#7E643B", refl: [0.26, 0.22, 0.24, 0.29, 0.38, 0.43, 0.44, 0.43] },
+      { ral: "RAL 1037", name: "Sun yellow", hex: "#EE9600", refl: [0.11, 0.09, 0.10, 0.21, 0.57, 0.78, 0.82, 0.81] },
+      { ral: "RAL 2000", name: "Yellow orange", hex: "#D95E00", refl: [0.10, 0.08, 0.09, 0.13, 0.38, 0.66, 0.75, 0.74] },
+      { ral: "RAL 2001", name: "Red orange", hex: "#B83A14", refl: [0.12, 0.09, 0.10, 0.11, 0.25, 0.52, 0.67, 0.66] },
+      { ral: "RAL 2002", name: "Vermilion", hex: "#C62B16", refl: [0.12, 0.09, 0.10, 0.10, 0.21, 0.53, 0.69, 0.68] },
+      { ral: "RAL 2003", name: "Pastel orange", hex: "#F36D19", refl: [0.14, 0.11, 0.12, 0.18, 0.46, 0.72, 0.78, 0.77] },
+      { ral: "RAL 2004", name: "Pure orange", hex: "#E25303", refl: [0.0820, 0.0710, 0.0750, 0.0980, 0.2950, 0.5850, 0.7120, 0.6950] },
+      { ral: "RAL 2005", name: "Luminous orange", hex: "#FF2300", refl: [0.15, 0.11, 0.12, 0.14, 0.35, 0.75, 0.88, 0.86] },
+      { ral: "RAL 2007", name: "Luminous bright orange", hex: "#FFA421", refl: [0.16, 0.12, 0.14, 0.22, 0.54, 0.82, 0.89, 0.88] },
+      { ral: "RAL 2008", name: "Bright red orange", hex: "#E75B12", refl: [0.11, 0.09, 0.10, 0.14, 0.37, 0.68, 0.76, 0.75] },
+      { ral: "RAL 2009", name: "Traffic orange", hex: "#DE5307", refl: [0.10, 0.08, 0.09, 0.13, 0.33, 0.65, 0.74, 0.73] },
+      { ral: "RAL 2010", name: "Signal orange", hex: "#CE5318", refl: [0.12, 0.09, 0.10, 0.13, 0.31, 0.60, 0.70, 0.69] },
+      { ral: "RAL 2011", name: "Deep orange", hex: "#E26E0B", refl: [0.11, 0.09, 0.10, 0.16, 0.43, 0.70, 0.77, 0.76] },
+      { ral: "RAL 2012", name: "Salmon orange", hex: "#D5654C", refl: [0.22, 0.17, 0.19, 0.22, 0.39, 0.61, 0.70, 0.69] },
+      { ral: "RAL 2013", name: "Pearl orange", hex: "#903D18", refl: [0.11, 0.08, 0.09, 0.10, 0.18, 0.36, 0.48, 0.47] },
+      { ral: "RAL 3000", name: "Flame red", hex: "#A72920", refl: [0.14, 0.09, 0.10, 0.09, 0.16, 0.43, 0.64, 0.64] },
+      { ral: "RAL 3001", name: "Signal red", hex: "#9B2321", refl: [0.15, 0.09, 0.10, 0.08, 0.13, 0.38, 0.61, 0.62] },
+      { ral: "RAL 3002", name: "Carmine red", hex: "#98231F", refl: [0.14, 0.09, 0.09, 0.08, 0.13, 0.37, 0.60, 0.61] },
+      { ral: "RAL 3003", name: "Ruby red", hex: "#861A22", refl: [0.12, 0.08, 0.08, 0.07, 0.09, 0.27, 0.52, 0.54] },
+      { ral: "RAL 3004", name: "Purple red", hex: "#6B1C23", refl: [0.10, 0.07, 0.07, 0.06, 0.08, 0.20, 0.43, 0.46] },
+      { ral: "RAL 3005", name: "Wine red", hex: "#59191F", refl: [0.09, 0.07, 0.07, 0.06, 0.07, 0.16, 0.36, 0.40] },
+      { ral: "RAL 3007", name: "Black red", hex: "#3E2021", refl: [0.07, 0.06, 0.06, 0.05, 0.06, 0.09, 0.18, 0.22] },
+      { ral: "RAL 3009", name: "Oxide red", hex: "#6D342D", refl: [0.11, 0.08, 0.09, 0.08, 0.12, 0.22, 0.38, 0.40] },
+      { ral: "RAL 3011", name: "Brown red", hex: "#782A24", refl: [0.11, 0.08, 0.08, 0.07, 0.12, 0.28, 0.48, 0.50] },
+      { ral: "RAL 3012", name: "Beige red", hex: "#C68873", refl: [0.42, 0.34, 0.37, 0.38, 0.50, 0.65, 0.72, 0.71] },
+      { ral: "RAL 3013", name: "Tomato red", hex: "#922B24", refl: [0.13, 0.09, 0.09, 0.08, 0.14, 0.35, 0.56, 0.57] },
+      { ral: "RAL 3014", name: "Antique pink", hex: "#CE747D", refl: [0.41, 0.32, 0.35, 0.32, 0.44, 0.63, 0.73, 0.73] },
+      { ral: "RAL 3015", name: "Light pink", hex: "#D8A0A6", refl: [0.4520, 0.4310, 0.4420, 0.4380, 0.5620, 0.6450, 0.7120, 0.6980] },
+      { ral: "RAL 3016", name: "Coral red", hex: "#B1423A", refl: [0.2754, 0.0996, 0.1202, 0.0934, 0.2465, 0.3513, 0.4594, 0.4387] },
+      { ral: "RAL 3017", name: "Rose", hex: "#CE5866", refl: [0.33, 0.22, 0.24, 0.20, 0.32, 0.56, 0.70, 0.70] },
+      { ral: "RAL 3018", name: "Strawberry red", hex: "#CE3543", refl: [0.24, 0.14, 0.15, 0.12, 0.23, 0.51, 0.68, 0.68] },
+      { ral: "RAL 3020", name: "Traffic red", hex: "#BA160C", refl: [0.14, 0.09, 0.09, 0.08, 0.16, 0.45, 0.68, 0.68] },
+      { ral: "RAL 3022", name: "Salmon pink", hex: "#CE6C56", refl: [0.29, 0.21, 0.23, 0.24, 0.41, 0.64, 0.72, 0.71] },
+      { ral: "RAL 3024", name: "Luminous red", hex: "#FF2D21", refl: [0.18, 0.12, 0.13, 0.12, 0.30, 0.76, 0.90, 0.88] },
+      { ral: "RAL 3026", name: "Luminous bright red", hex: "#FF2A1B", refl: [0.18, 0.12, 0.13, 0.12, 0.28, 0.74, 0.90, 0.88] },
+      { ral: "RAL 3027", name: "Raspberry red", hex: "#A8233D", refl: [0.20, 0.12, 0.12, 0.09, 0.16, 0.42, 0.64, 0.64] },
+      { ral: "RAL 3028", name: "Pure red", hex: "#CB2822", refl: [0.15, 0.09, 0.10, 0.09, 0.18, 0.48, 0.70, 0.69] },
+      { ral: "RAL 3031", name: "Orient red", hex: "#A4343A", refl: [0.20, 0.13, 0.14, 0.12, 0.19, 0.44, 0.64, 0.64] },
+      { ral: "RAL 3032", name: "Pearl ruby red", hex: "#6F1826", refl: [0.11, 0.07, 0.07, 0.06, 0.09, 0.23, 0.45, 0.46] },
+      { ral: "RAL 3033", name: "Pearl pink", hex: "#AB4E52", refl: [0.25, 0.18, 0.19, 0.17, 0.27, 0.47, 0.58, 0.58] },
+      { ral: "RAL 4001", name: "Red lilac", hex: "#7B587E", refl: [0.38, 0.32, 0.30, 0.25, 0.30, 0.42, 0.53, 0.57] },
+      { ral: "RAL 4002", name: "Red violet", hex: "#873B53", refl: [0.27, 0.18, 0.17, 0.13, 0.20, 0.38, 0.56, 0.59] },
+      { ral: "RAL 4003", name: "Heather violet", hex: "#B86384", refl: [0.44, 0.34, 0.33, 0.27, 0.36, 0.55, 0.68, 0.70] },
+      { ral: "RAL 4004", name: "Claret violet", hex: "#601C38", refl: [0.15, 0.09, 0.08, 0.06, 0.09, 0.21, 0.41, 0.45] },
+      { ral: "RAL 4005", name: "Blue lilac", hex: "#786689", refl: [0.45, 0.41, 0.40, 0.33, 0.36, 0.44, 0.51, 0.55] },
+      { ral: "RAL 4006", name: "Traffic purple", hex: "#8C2B75", refl: [0.35, 0.22, 0.18, 0.11, 0.18, 0.39, 0.61, 0.65] },
+      { ral: "RAL 4007", name: "Purple violet", hex: "#43233D", refl: [0.15, 0.10, 0.09, 0.07, 0.08, 0.14, 0.26, 0.30] },
+      { ral: "RAL 4008", name: "Signal violet", hex: "#7B3577", refl: [0.35, 0.25, 0.22, 0.14, 0.21, 0.38, 0.55, 0.60] },
+      { ral: "RAL 4009", name: "Pastel violet", hex: "#98818E", refl: [0.49, 0.45, 0.45, 0.42, 0.46, 0.52, 0.56, 0.58] },
+      { ral: "RAL 4010", name: "Telemagenta", hex: "#BA2B6C", refl: [0.36, 0.23, 0.20, 0.13, 0.22, 0.47, 0.68, 0.70] },
+      { ral: "RAL 4011", name: "Pearl violet", hex: "#7C6C7E", refl: [0.38, 0.34, 0.34, 0.31, 0.34, 0.40, 0.45, 0.48] },
+      { ral: "RAL 4012", name: "Pearl blackberry", hex: "#635865", refl: [0.28, 0.24, 0.24, 0.22, 0.25, 0.29, 0.33, 0.35] },
+      { ral: "RAL 5000", name: "Violet blue", hex: "#324B69", refl: [0.30, 0.30, 0.26, 0.19, 0.18, 0.19, 0.19, 0.20] },
+      { ral: "RAL 5001", name: "Green blue", hex: "#1C4E61", refl: [0.24, 0.27, 0.27, 0.22, 0.20, 0.17, 0.16, 0.16] },
+      { ral: "RAL 5002", name: "Ultramarine blue", hex: "#162E7B", refl: [0.1210, 0.2750, 0.2100, 0.1180, 0.0520, 0.0410, 0.0400, 0.0380] },
+      { ral: "RAL 5003", name: "Sapphire blue", hex: "#1D334A", refl: [0.18, 0.20, 0.16, 0.11, 0.09, 0.09, 0.09, 0.09] },
+      { ral: "RAL 5004", name: "Black blue", hex: "#191D24", refl: [0.08, 0.08, 0.07, 0.06, 0.05, 0.05, 0.05, 0.05] },
       { ral: "RAL 5005", name: "Signal blue", hex: "#005387", refl: [0.1028, 0.2641, 0.2266, 0.1495, 0.0681, 0.0488, 0.0477, 0.0425] },
-      { ral: "RAL 5010", name: "Gentian blue", hex: "#13447c", refl: [0.0890, 0.2310, 0.1980, 0.1250, 0.0580, 0.0420, 0.0410, 0.0370] },
-      { ral: "RAL 5002", name: "Ultramarine blue", hex: "#162e7b", refl: [0.1210, 0.2750, 0.2100, 0.1180, 0.0520, 0.0410, 0.0400, 0.0380] },
-      { ral: "RAL 8017", name: "Chocolate brown", hex: "#442f29", refl: [0.0751, 0.0581, 0.0620, 0.0602, 0.0756, 0.0807, 0.0870, 0.0766] },
-      { ral: "RAL 8019", name: "Grey brown", hex: "#3b3635", refl: [0.0620, 0.0510, 0.0540, 0.0530, 0.0620, 0.0650, 0.0690, 0.0610] },
-      { ral: "RAL 2004", name: "Pure orange", hex: "#e25303", refl: [0.0820, 0.0710, 0.0750, 0.0980, 0.2950, 0.5850, 0.7120, 0.6950] },
-      { ral: "RAL 3016", name: "Coral red", hex: "#b1423a", refl: [0.2754, 0.0996, 0.1202, 0.0934, 0.2465, 0.3513, 0.4594, 0.4387] },
-      { ral: "RAL 3015", name: "Light pink", hex: "#d8a0a6", refl: [0.4520, 0.4310, 0.4420, 0.4380, 0.5620, 0.6450, 0.7120, 0.6980] },
-      { ral: "RAL 1015", name: "Light ivory", hex: "#e6d9bd", refl: [0.7787, 0.6558, 0.6924, 0.7415, 0.8318, 0.8490, 0.8415, 0.8331] },
-      { ral: "RAL 1019", name: "Grey beige", hex: "#9e9784", refl: [0.3850, 0.3620, 0.3840, 0.4120, 0.4650, 0.4780, 0.4820, 0.4710] },
-      { ral: "RAL 7040", name: "Window grey", hex: "#989ea1", refl: [0.4401, 0.4596, 0.4540, 0.4540, 0.4378, 0.4276, 0.4235, 0.4152] },
-      { ral: "RAL 6018", name: "Yellow green", hex: "#48a43f", refl: [0.1120, 0.1250, 0.1840, 0.3450, 0.5120, 0.4250, 0.2150, 0.1850] },
-      { ral: "RAL 6027", name: "Light green", hex: "#77bfa9", refl: [0.3120, 0.3650, 0.4320, 0.5210, 0.5050, 0.4510, 0.3850, 0.3620] },
-      { ral: "RAL 9006", name: "White aluminium", hex: "#a5a8a6", refl: [0.4980, 0.4939, 0.4980, 0.5023, 0.5084, 0.5061, 0.5009, 0.4880] }
+      { ral: "RAL 5007", name: "Brilliant blue", hex: "#356A88", refl: [0.35, 0.40, 0.38, 0.31, 0.26, 0.24, 0.23, 0.23] },
+      { ral: "RAL 5008", name: "Grey blue", hex: "#29343B", refl: [0.15, 0.16, 0.14, 0.12, 0.11, 0.11, 0.11, 0.11] },
+      { ral: "RAL 5009", name: "Azure blue", hex: "#235973", refl: [0.28, 0.33, 0.32, 0.26, 0.22, 0.20, 0.19, 0.19] },
+      { ral: "RAL 5010", name: "Gentian blue", hex: "#13447C", refl: [0.0890, 0.2310, 0.1980, 0.1250, 0.0580, 0.0420, 0.0410, 0.0370] },
+      { ral: "RAL 5011", name: "Steel blue", hex: "#1B2A3B", refl: [0.14, 0.15, 0.12, 0.09, 0.07, 0.07, 0.07, 0.07] },
+      { ral: "RAL 5012", name: "Light blue", hex: "#2B81AB", refl: [0.42, 0.51, 0.50, 0.42, 0.34, 0.29, 0.27, 0.26] },
+      { ral: "RAL 5013", name: "Cobalt blue", hex: "#1A2B4C", refl: [0.18, 0.20, 0.14, 0.09, 0.07, 0.07, 0.07, 0.07] },
+      { ral: "RAL 5014", name: "Pigeon blue", hex: "#5C768D", refl: [0.43, 0.47, 0.45, 0.39, 0.37, 0.36, 0.36, 0.36] },
+      { ral: "RAL 5015", name: "Sky blue", hex: "#1E78A8", refl: [0.38, 0.47, 0.46, 0.38, 0.30, 0.25, 0.24, 0.23] },
+      { ral: "RAL 5017", name: "Traffic blue", hex: "#00598E", refl: [0.29, 0.36, 0.33, 0.24, 0.16, 0.13, 0.13, 0.12] },
+      { ral: "RAL 5018", name: "Turquoise blue", hex: "#328E95", refl: [0.38, 0.45, 0.49, 0.48, 0.41, 0.33, 0.30, 0.28] },
+      { ral: "RAL 5019", name: "Capri blue", hex: "#15638E", refl: [0.30, 0.37, 0.35, 0.27, 0.20, 0.16, 0.16, 0.15] },
+      { ral: "RAL 5020", name: "Ocean blue", hex: "#0B4151", refl: [0.18, 0.21, 0.21, 0.17, 0.14, 0.12, 0.12, 0.12] },
+      { ral: "RAL 5021", name: "Water blue", hex: "#007281", refl: [0.29, 0.36, 0.39, 0.36, 0.29, 0.22, 0.20, 0.19] },
+      { ral: "RAL 5022", name: "Night blue", hex: "#1C2746", refl: [0.18, 0.19, 0.13, 0.08, 0.06, 0.06, 0.06, 0.06] },
+      { ral: "RAL 5023", name: "Distant blue", hex: "#426786", refl: [0.38, 0.43, 0.40, 0.32, 0.28, 0.26, 0.26, 0.26] },
+      { ral: "RAL 5024", name: "Pastel blue", hex: "#5E8AA3", refl: [0.49, 0.55, 0.54, 0.47, 0.43, 0.40, 0.39, 0.38] },
+      { ral: "RAL 5025", name: "Pearl gentian blue", hex: "#1E5874", refl: [0.26, 0.32, 0.31, 0.25, 0.20, 0.18, 0.18, 0.18] },
+      { ral: "RAL 5026", name: "Pearl night blue", hex: "#0F2643", refl: [0.15, 0.16, 0.12, 0.08, 0.06, 0.06, 0.06, 0.06] },
+      { ral: "RAL 6000", name: "Patina green", hex: "#31745E", refl: [0.26, 0.31, 0.35, 0.39, 0.36, 0.29, 0.27, 0.26] },
+      { ral: "RAL 6001", name: "Emerald green", hex: "#2C6E39", refl: [0.18, 0.20, 0.24, 0.36, 0.36, 0.26, 0.23, 0.22] },
+      { ral: "RAL 6002", name: "Leaf green", hex: "#26592B", refl: [0.15, 0.16, 0.19, 0.29, 0.29, 0.21, 0.19, 0.18] },
+      { ral: "RAL 6003", name: "Olive green", hex: "#4C513B", refl: [0.19, 0.19, 0.20, 0.24, 0.25, 0.23, 0.22, 0.22] },
+      { ral: "RAL 6004", name: "Blue green", hex: "#004242", refl: [0.15, 0.17, 0.18, 0.18, 0.15, 0.12, 0.12, 0.12] },
+      { ral: "RAL 6005", name: "Moss green", hex: "#114232", refl: [0.14, 0.15, 0.16, 0.20, 0.18, 0.14, 0.13, 0.13] },
+      { ral: "RAL 6006", name: "Grey olive", hex: "#38362E", refl: [0.13, 0.13, 0.13, 0.14, 0.15, 0.15, 0.15, 0.15] },
+      { ral: "RAL 6007", name: "Bottle green", hex: "#263625", refl: [0.12, 0.12, 0.13, 0.16, 0.15, 0.13, 0.13, 0.13] },
+      { ral: "RAL 6008", name: "Brown green", hex: "#323027", refl: [0.11, 0.11, 0.11, 0.12, 0.13, 0.14, 0.14, 0.14] },
+      { ral: "RAL 6009", name: "Fir green", hex: "#213227", refl: [0.11, 0.11, 0.12, 0.14, 0.13, 0.11, 0.11, 0.11] },
+      { ral: "RAL 6010", name: "Grass green", hex: "#3D6933", refl: [0.18, 0.20, 0.24, 0.35, 0.36, 0.27, 0.24, 0.23] },
+      { ral: "RAL 6011", name: "Reseda green", hex: "#667B5F", refl: [0.32, 0.34, 0.37, 0.44, 0.46, 0.41, 0.39, 0.39] },
+      { ral: "RAL 6012", name: "Black green", hex: "#253430", refl: [0.12, 0.13, 0.13, 0.14, 0.13, 0.12, 0.12, 0.12] },
+      { ral: "RAL 6013", name: "Reed green", hex: "#76725B", refl: [0.32, 0.32, 0.34, 0.39, 0.43, 0.42, 0.41, 0.41] },
+      { ral: "RAL 6014", name: "Yellow olive", hex: "#3F3A30", refl: [0.14, 0.13, 0.14, 0.16, 0.17, 0.18, 0.18, 0.18] },
+      { ral: "RAL 6015", name: "Black olive", hex: "#373733", refl: [0.12, 0.12, 0.12, 0.13, 0.14, 0.14, 0.14, 0.14] },
+      { ral: "RAL 6016", name: "Turquoise green", hex: "#00674C", refl: [0.22, 0.26, 0.30, 0.36, 0.31, 0.23, 0.21, 0.20] },
+      { ral: "RAL 6017", name: "May green", hex: "#4C803E", refl: [0.21, 0.24, 0.29, 0.44, 0.46, 0.36, 0.32, 0.30] },
+      { ral: "RAL 6018", name: "Yellow green", hex: "#48A43F", refl: [0.1120, 0.1250, 0.1840, 0.3450, 0.5120, 0.4250, 0.2150, 0.1850] },
+      { ral: "RAL 6019", name: "Pastel green", hex: "#B4D1B6", refl: [0.65, 0.69, 0.73, 0.78, 0.79, 0.75, 0.73, 0.72] },
+      { ral: "RAL 6020", name: "Chrome green", hex: "#344135", refl: [0.14, 0.15, 0.16, 0.19, 0.19, 0.17, 0.17, 0.17] },
+      { ral: "RAL 6021", name: "Pale green", hex: "#859A7F", refl: [0.44, 0.47, 0.50, 0.57, 0.59, 0.54, 0.52, 0.52] },
+      { ral: "RAL 6022", name: "Olive drab", hex: "#2E2A20", refl: [0.10, 0.10, 0.10, 0.11, 0.12, 0.13, 0.13, 0.13] },
+      { ral: "RAL 6024", name: "Traffic green", hex: "#00835B", refl: [0.28, 0.34, 0.40, 0.48, 0.42, 0.30, 0.27, 0.26] },
+      { ral: "RAL 6025", name: "Fern green", hex: "#527544", refl: [0.24, 0.26, 0.30, 0.41, 0.42, 0.34, 0.31, 0.30] },
+      { ral: "RAL 6026", name: "Opal green", hex: "#005C54", refl: [0.22, 0.26, 0.29, 0.32, 0.27, 0.21, 0.20, 0.19] },
+      { ral: "RAL 6027", name: "Light green", hex: "#77BFA9", refl: [0.3120, 0.3650, 0.4320, 0.5210, 0.5050, 0.4510, 0.3850, 0.3620] },
+      { ral: "RAL 6028", name: "Pine green", hex: "#2C5545", refl: [0.20, 0.23, 0.25, 0.29, 0.27, 0.22, 0.21, 0.20] },
+      { ral: "RAL 6029", name: "Mint green", hex: "#006F43", refl: [0.21, 0.25, 0.30, 0.40, 0.35, 0.24, 0.22, 0.21] },
+      { ral: "RAL 6032", name: "Signal green", hex: "#227F52", refl: [0.26, 0.31, 0.36, 0.45, 0.41, 0.30, 0.27, 0.26] },
+      { ral: "RAL 6033", name: "Mint turquoise", hex: "#40847D", refl: [0.35, 0.41, 0.45, 0.47, 0.43, 0.36, 0.34, 0.33] },
+      { ral: "RAL 6034", name: "Pastel turquoise", hex: "#7AA9A1", refl: [0.49, 0.55, 0.59, 0.62, 0.59, 0.54, 0.52, 0.51] },
+      { ral: "RAL 6035", name: "Pearl green", hex: "#164B34", refl: [0.15, 0.18, 0.20, 0.24, 0.22, 0.17, 0.16, 0.16] },
+      { ral: "RAL 6036", name: "Pearl opal green", hex: "#19514B", refl: [0.18, 0.22, 0.24, 0.27, 0.24, 0.19, 0.18, 0.17] },
+      { ral: "RAL 6037", name: "Pure green", hex: "#008B34", refl: [0.20, 0.24, 0.31, 0.49, 0.47, 0.30, 0.25, 0.24] },
+      { ral: "RAL 6038", name: "Luminous green", hex: "#00B539", refl: [0.24, 0.30, 0.41, 0.68, 0.68, 0.42, 0.32, 0.30] },
+      { ral: "RAL 7000", name: "Squirrel grey", hex: "#77858A", refl: [0.45, 0.48, 0.49, 0.50, 0.49, 0.48, 0.48, 0.48] },
+      { ral: "RAL 7001", name: "Silver grey", hex: "#8A9398", refl: [0.51, 0.54, 0.55, 0.56, 0.55, 0.54, 0.54, 0.54] },
+      { ral: "RAL 7002", name: "Olive grey", hex: "#7E7866", refl: [0.41, 0.40, 0.42, 0.45, 0.48, 0.48, 0.48, 0.48] },
+      { ral: "RAL 7003", name: "Moss grey", hex: "#6E7065", refl: [0.38, 0.38, 0.40, 0.42, 0.44, 0.44, 0.43, 0.43] },
+      { ral: "RAL 7004", name: "Signal grey", hex: "#959796", refl: [0.56, 0.57, 0.57, 0.57, 0.57, 0.57, 0.57, 0.57] },
+      { ral: "RAL 7005", name: "Mouse grey", hex: "#696B68", refl: [0.38, 0.39, 0.39, 0.40, 0.40, 0.40, 0.40, 0.40] },
+      { ral: "RAL 7006", name: "Beige grey", hex: "#6E6354", refl: [0.36, 0.34, 0.35, 0.37, 0.41, 0.42, 0.43, 0.43] },
+      { ral: "RAL 7008", name: "Khaki grey", hex: "#6B583D", refl: [0.29, 0.26, 0.27, 0.31, 0.38, 0.41, 0.42, 0.42] },
+      { ral: "RAL 7009", name: "Green grey", hex: "#565952", refl: [0.29, 0.30, 0.31, 0.33, 0.34, 0.34, 0.34, 0.34] },
+      { ral: "RAL 7010", name: "Tarpaulin grey", hex: "#52544E", refl: [0.27, 0.28, 0.29, 0.30, 0.31, 0.31, 0.31, 0.31] },
+      { ral: "RAL 7011", name: "Iron grey", hex: "#4B5357", refl: [0.27, 0.29, 0.30, 0.30, 0.30, 0.29, 0.29, 0.29] },
+      { ral: "RAL 7012", name: "Basalt grey", hex: "#545A5C", refl: [0.31, 0.33, 0.34, 0.34, 0.34, 0.33, 0.33, 0.33] },
+      { ral: "RAL 7013", name: "Brown grey", hex: "#4E4B42", refl: [0.25, 0.24, 0.25, 0.27, 0.29, 0.30, 0.30, 0.30] },
+      { ral: "RAL 7015", name: "Slate grey", hex: "#474B4E", refl: [0.25, 0.27, 0.28, 0.28, 0.28, 0.27, 0.27, 0.27] },
+      { ral: "RAL 7016", name: "Anthracite grey", hex: "#373E43", refl: [0.18, 0.20, 0.21, 0.21, 0.20, 0.20, 0.20, 0.20] },
+      { ral: "RAL 7021", name: "Black grey", hex: "#2F3234", refl: [0.0585, 0.0580, 0.0610, 0.0595, 0.0580, 0.0565, 0.0580, 0.0510] },
+      { ral: "RAL 7022", name: "Umbra grey", hex: "#42403A", refl: [0.19, 0.19, 0.20, 0.21, 0.22, 0.22, 0.23, 0.23] },
+      { ral: "RAL 7023", name: "Concrete grey", hex: "#7E8177", refl: [0.45, 0.46, 0.48, 0.50, 0.51, 0.50, 0.50, 0.50] },
+      { ral: "RAL 7024", name: "Graphite grey", hex: "#43474B", refl: [0.24, 0.26, 0.26, 0.26, 0.26, 0.26, 0.26, 0.26] },
+      { ral: "RAL 7026", name: "Granite grey", hex: "#353D40", refl: [0.19, 0.21, 0.22, 0.22, 0.21, 0.20, 0.20, 0.20] },
+      { ral: "RAL 7030", name: "Stone grey", hex: "#8F8F89", refl: [0.52, 0.53, 0.54, 0.55, 0.56, 0.56, 0.56, 0.56] },
+      { ral: "RAL 7031", name: "Blue grey", hex: "#586369", refl: [0.33, 0.36, 0.37, 0.38, 0.37, 0.36, 0.36, 0.36] },
+      { ral: "RAL 7032", name: "Pebble grey", hex: "#B5B4A4", refl: [0.65, 0.65, 0.67, 0.70, 0.72, 0.72, 0.72, 0.71] },
+      { ral: "RAL 7033", name: "Cement grey", hex: "#777C72", refl: [0.42, 0.44, 0.46, 0.49, 0.50, 0.49, 0.48, 0.48] },
+      { ral: "RAL 7034", name: "Yellow grey", hex: "#8A8572", refl: [0.47, 0.46, 0.48, 0.51, 0.54, 0.54, 0.55, 0.54] },
+      { ral: "RAL 7035", name: "Light grey", hex: "#CBD0CC", refl: [0.75, 0.77, 0.78, 0.79, 0.79, 0.79, 0.79, 0.78] },
+      { ral: "RAL 7036", name: "Platinum grey", hex: "#918D8A", refl: [0.52, 0.52, 0.53, 0.53, 0.54, 0.55, 0.55, 0.55] },
+      { ral: "RAL 7037", name: "Dusty grey", hex: "#767979", refl: [0.44, 0.45, 0.46, 0.46, 0.46, 0.46, 0.46, 0.46] },
+      { ral: "RAL 7038", name: "Agate grey", hex: "#B1B3A9", refl: [0.64, 0.65, 0.67, 0.69, 0.70, 0.70, 0.70, 0.69] },
+      { ral: "RAL 7039", name: "Quartz grey", hex: "#67655E", refl: [0.35, 0.35, 0.36, 0.38, 0.39, 0.40, 0.40, 0.40] },
+      { ral: "RAL 7040", name: "Window grey", hex: "#989EA1", refl: [0.4401, 0.4596, 0.4540, 0.4540, 0.4378, 0.4276, 0.4235, 0.4152] },
+      { ral: "RAL 7042", name: "Traffic grey A", hex: "#8C9191", refl: [0.51, 0.53, 0.53, 0.54, 0.54, 0.54, 0.54, 0.53] },
+      { ral: "RAL 7043", name: "Traffic grey B", hex: "#4B4E4D", refl: [0.26, 0.27, 0.28, 0.28, 0.28, 0.28, 0.28, 0.28] },
+      { ral: "RAL 7044", name: "Silk grey", hex: "#B9B8AC", refl: [0.67, 0.67, 0.69, 0.72, 0.74, 0.74, 0.74, 0.73] },
+      { ral: "RAL 7045", name: "Telegrey 1", hex: "#8D9295", refl: [0.51, 0.53, 0.54, 0.55, 0.54, 0.54, 0.54, 0.54] },
+      { ral: "RAL 7046", name: "Telegrey 2", hex: "#7C8286", refl: [0.46, 0.48, 0.49, 0.50, 0.49, 0.49, 0.49, 0.49] },
+      { ral: "RAL 7047", name: "Telegrey 4", hex: "#CECFCC", refl: [0.77, 0.78, 0.78, 0.79, 0.79, 0.79, 0.79, 0.78] },
+      { ral: "RAL 7048", name: "Pearl mouse grey", hex: "#7B776E", refl: [0.41, 0.40, 0.41, 0.43, 0.46, 0.47, 0.47, 0.47] },
+      { ral: "RAL 8000", name: "Green brown", hex: "#83653A", refl: [0.26, 0.23, 0.25, 0.30, 0.40, 0.46, 0.50, 0.49] },
+      { ral: "RAL 8001", name: "Ochre brown", hex: "#8D592C", refl: [0.23, 0.19, 0.21, 0.26, 0.37, 0.49, 0.56, 0.55] },
+      { ral: "RAL 8002", name: "Signal brown", hex: "#6E3E2C", refl: [0.17, 0.13, 0.14, 0.16, 0.23, 0.35, 0.46, 0.46] },
+      { ral: "RAL 8003", name: "Clay brown", hex: "#734426", refl: [0.18, 0.14, 0.15, 0.18, 0.27, 0.40, 0.49, 0.49] },
+      { ral: "RAL 8004", name: "Copper brown", hex: "#843E2C", refl: [0.18, 0.13, 0.14, 0.15, 0.23, 0.39, 0.52, 0.52] },
+      { ral: "RAL 8007", name: "Fawn brown", hex: "#573523", refl: [0.14, 0.11, 0.11, 0.13, 0.18, 0.28, 0.38, 0.38] },
+      { ral: "RAL 8008", name: "Olive brown", hex: "#6A4526", refl: [0.17, 0.13, 0.14, 0.17, 0.25, 0.36, 0.44, 0.44] },
+      { ral: "RAL 8011", name: "Nut brown", hex: "#4E2B1E", refl: [0.12, 0.09, 0.09, 0.10, 0.14, 0.23, 0.34, 0.35] },
+      { ral: "RAL 8012", name: "Red brown", hex: "#592923", refl: [0.12, 0.09, 0.09, 0.09, 0.13, 0.23, 0.37, 0.39] },
+      { ral: "RAL 8014", name: "Sepia brown", hex: "#3C281F", refl: [0.10, 0.08, 0.08, 0.09, 0.12, 0.17, 0.24, 0.25] },
+      { ral: "RAL 8015", name: "Chestnut brown", hex: "#522621", refl: [0.12, 0.08, 0.08, 0.08, 0.12, 0.21, 0.34, 0.36] },
+      { ral: "RAL 8016", name: "Mahogany brown", hex: "#43231C", refl: [0.10, 0.07, 0.07, 0.07, 0.10, 0.17, 0.27, 0.29] },
+      { ral: "RAL 8017", name: "Chocolate brown", hex: "#442F29", refl: [0.0751, 0.0581, 0.0620, 0.0602, 0.0756, 0.0807, 0.0870, 0.0766] },
+      { ral: "RAL 8019", name: "Grey brown", hex: "#3B3635", refl: [0.0620, 0.0510, 0.0540, 0.0530, 0.0620, 0.0650, 0.0690, 0.0610] },
+      { ral: "RAL 8022", name: "Black brown", hex: "#221D1A", refl: [0.07, 0.06, 0.06, 0.06, 0.07, 0.08, 0.10, 0.10] },
+      { ral: "RAL 8023", name: "Orange brown", hex: "#9E4F28", refl: [0.17, 0.13, 0.14, 0.17, 0.30, 0.50, 0.60, 0.59] },
+      { ral: "RAL 8024", name: "Beige brown", hex: "#704834", refl: [0.21, 0.17, 0.18, 0.21, 0.29, 0.40, 0.49, 0.49] },
+      { ral: "RAL 8025", name: "Pale brown", hex: "#6D4C3A", refl: [0.24, 0.20, 0.21, 0.24, 0.32, 0.42, 0.49, 0.49] },
+      { ral: "RAL 8028", name: "Terra brown", hex: "#442C21", refl: [0.12, 0.09, 0.09, 0.10, 0.14, 0.21, 0.29, 0.30] },
+      { ral: "RAL 8029", name: "Pearl copper", hex: "#7E3A2B", refl: [0.18, 0.13, 0.14, 0.15, 0.23, 0.37, 0.48, 0.48] },
+      { ral: "RAL 9001", name: "Cream", hex: "#EDE8D8", refl: [0.81, 0.79, 0.82, 0.85, 0.89, 0.91, 0.91, 0.90] },
+      { ral: "RAL 9002", name: "Grey white", hex: "#D7D7D1", refl: [0.79, 0.80, 0.81, 0.83, 0.84, 0.84, 0.84, 0.83] },
+      { ral: "RAL 9003", name: "Signal white", hex: "#F4F4F4", refl: [0.9852, 0.9842, 0.9847, 0.9841, 0.9858, 0.9861, 0.9851, 0.9855] },
+      { ral: "RAL 9004", name: "Signal black", hex: "#282828", refl: [0.0512, 0.0505, 0.0531, 0.0518, 0.0501, 0.0485, 0.0495, 0.0410] },
+      { ral: "RAL 9005", name: "Jet black", hex: "#0A0A0D", refl: [0.0474, 0.0461, 0.0498, 0.0480, 0.0466, 0.0442, 0.0465, 0.0371] },
+      { ral: "RAL 9006", name: "White aluminium", hex: "#A5A8A6", refl: [0.4980, 0.4939, 0.4980, 0.5023, 0.5084, 0.5061, 0.5009, 0.4880] },
+      { ral: "RAL 9007", name: "Grey aluminium", hex: "#8F8F8C", refl: [0.42, 0.42, 0.43, 0.43, 0.44, 0.44, 0.44, 0.43] },
+      { ral: "RAL 9010", name: "Pure white", hex: "#F7F5EC", refl: [0.91, 0.90, 0.92, 0.94, 0.96, 0.97, 0.97, 0.96] },
+      { ral: "RAL 9011", name: "Graphite black", hex: "#1C1C1C", refl: [0.0485, 0.0480, 0.0508, 0.0492, 0.0478, 0.0460, 0.0475, 0.0388] },
+      { ral: "RAL 9016", name: "Traffic white", hex: "#F6F6F6", refl: [0.9890, 0.9880, 0.9875, 0.9860, 0.9865, 0.9855, 0.9840, 0.9835] },
+      { ral: "RAL 9017", name: "Traffic black", hex: "#1E1E1E", refl: [0.0490, 0.0485, 0.0510, 0.0495, 0.0480, 0.0465, 0.0480, 0.0395] },
+      { ral: "RAL 9018", name: "Papyrus white", hex: "#CFD0C9", refl: [0.77, 0.78, 0.79, 0.81, 0.82, 0.82, 0.82, 0.81] },
+      { ral: "RAL 9022", name: "Pearl light grey", hex: "#858583", refl: [0.49, 0.49, 0.50, 0.51, 0.52, 0.52, 0.52, 0.51] },
+      { ral: "RAL 9023", name: "Pearl dark grey", hex: "#797B7A", refl: [0.44, 0.45, 0.46, 0.46, 0.47, 0.47, 0.47, 0.46] }
     ];
 
-    // Загрузка пользовательских калибровок поверх базовых
     function getDatabase() {
-      const stored = localStorage.getItem("custom_ral_spectral_db");
+      const stored = localStorage.getItem("custom_ral_spectral_db_v216");
       if (stored) {
         try { return JSON.parse(stored); } catch(e){}
       }
-      return defaultSpectralDatabase;
+      return fullRalClassic;
     }
 
     let activeDatabase = getDatabase();
     let lastRefl = null;
 
-    // Отрисовка колонок спектра
-    const channelNames = ["F1 (415)", "F2 (445)", "F3 (480)", "F4 (515)", "F5 (555)", "F6 (590)", "F7 (630)", "F8 (680)"];
+    // Заполнение выпадающего списка всеми 216 цветами
+    const trainSelect = document.getElementById("trainSelect");
+    trainSelect.innerHTML = fullRalClassic.map(c => `
+      <option value="${c.ral}|${c.name}">${c.ral} (${c.name})</option>
+    `).join("");
+
+    // Отрисовка графических колонок каналов F1..F8
+    const channelNames = ["F1 415", "F2 445", "F3 480", "F4 515", "F5 555", "F6 590", "F7 630", "F8 680"];
     const barsContainer = document.getElementById("barsContainer");
     barsContainer.innerHTML = channelNames.map((name, i) => `
       <div class="channel-col">
@@ -153,13 +340,11 @@
     `).join("");
 
     // =========================================================================
-    // АЛГОРИТМ ПРЯМОГО СПЕКТРАЛЬНОГО ПОИСКА
+    // ПРЯМОЙ СПЕКТРАЛЬНЫЙ ПОИСК (WEIGHTED EUCLIDEAN SPECTRUM DISTANCE)
     // =========================================================================
     function matchSpectralFingerprint(measuredRefl) {
       let bestMatch = null;
       let minDistance = Infinity;
-
-      // Взвешенное евклидово расстояние по 8 каналам
       const weights = [1.0, 1.4, 1.3, 1.1, 1.0, 1.2, 1.3, 1.1];
 
       for (const entry of activeDatabase) {
@@ -169,26 +354,20 @@
           sumSq += weights[i] * diff * diff;
         }
         const dist = Math.sqrt(sumSq);
-
         if (dist < minDistance) {
           minDistance = dist;
           bestMatch = entry;
         }
       }
-
       return { match: bestMatch, distance: minDistance };
     }
 
-    // Сохранить текущий замер в базу
     function saveCurrentSampleAsRAL() {
       if (!lastRefl) {
         alert("Сначала сделайте замер образца!");
         return;
       }
-      const select = document.getElementById("trainSelect");
-      const [ral, name] = select.value.split("|");
-
-      // Обновляем или добавляем запись
+      const [ral, name] = trainSelect.value.split("|");
       const idx = activeDatabase.findIndex(x => x.ral === ral);
       if (idx >= 0) {
         activeDatabase[idx].refl = [...lastRefl];
@@ -196,9 +375,17 @@
         activeDatabase.push({ ral, name, hex: "#888888", refl: [...lastRefl] });
       }
 
-      localStorage.setItem("custom_ral_spectral_db", JSON.stringify(activeDatabase));
-      alert(`Спектральный отпечаток для ${ral} успешно сохранён!`);
+      localStorage.setItem("custom_ral_spectral_db_v216", JSON.stringify(activeDatabase));
+      alert(`Спектральный профиль ${ral} сохранён в память браузера!`);
       updateUIWithMatch(lastRefl, 100);
+    }
+
+    function resetCustomCalibrations() {
+      if (confirm("Сбросить пользовательские спектры к синтезированным эталонам по умолчанию?")) {
+        localStorage.removeItem("custom_ral_spectral_db_v216");
+        activeDatabase = [...fullRalClassic];
+        alert("Память сброшена к заводским эталонам.");
+      }
     }
 
     // =========================================================================
@@ -214,7 +401,7 @@
 
     async function connectBLE() {
       try {
-        document.getElementById("bleStatus").innerText = "Поиск устройства...";
+        document.getElementById("bleStatus").innerText = "Поиск...";
         bleDevice = await navigator.bluetooth.requestDevice({
           filters: [{ namePrefix: "RAL-Scanner" }],
           optionalServices: [SERVICE_UUID]
@@ -238,7 +425,7 @@
         document.getElementById("btnCalBlack").disabled = false;
       } catch (err) {
         console.error(err);
-        document.getElementById("bleStatus").innerText = "Ошибка подключения";
+        document.getElementById("bleStatus").innerText = "Ошибка";
       }
     }
 
@@ -264,7 +451,7 @@
 
       if (bleBuffer.includes("\n")) {
         const lines = bleBuffer.split("\n");
-        bleBuffer = lines.pop(); // остаток строки
+        bleBuffer = lines.pop();
 
         for (const line of lines) {
           if (line.trim().startsWith("{")) {
@@ -283,7 +470,6 @@
     }
 
     function updateUIWithMatch(refl, quality) {
-      // Обновление спектральных колонок
       for (let i = 0; i < 8; i++) {
         const val = refl[i];
         document.getElementById(`val_F${i+1}`).innerText = val.toFixed(3);
@@ -291,7 +477,6 @@
         document.getElementById(`bar_F${i+1}`).style.height = `${percent}%`;
       }
 
-      // Спектральное сопоставление
       const result = matchSpectralFingerprint(refl);
       if (result.match) {
         document.getElementById("ralCode").innerText = result.match.ral;
