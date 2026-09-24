@@ -200,7 +200,7 @@
 </head>
 <body>
   <div class="container">
-    <!-- Подключение -->
+    <!-- Шапка подключения -->
     <div class="card header">
       <div>
         <h1>Color Station PRO</h1>
@@ -238,6 +238,15 @@
           </div>
           <span id="alt2De" style="font-size: 0.85rem; color: var(--text-dim);">--</span>
         </div>
+      </div>
+    </div>
+
+    <!-- Панель быстрой калибровки NVS -->
+    <div class="card">
+      <div style="font-size: 0.85rem; color: var(--text-dim); text-transform: uppercase; font-weight: 600; margin-bottom: 8px;">Калибровка базы (NVS)</div>
+      <div class="actions">
+        <button class="btn btn-outline" style="font-size: 0.8rem;" onclick="sendCalibCmd('CAL_WHITE')">Калибр. Белый</button>
+        <button class="btn btn-outline" style="font-size: 0.8rem;" onclick="sendCalibCmd('CAL_BLACK')">Калибр. Черный</button>
       </div>
     </div>
 
@@ -441,11 +450,11 @@
         { code: "RAL 7012", name: "Basalt grey", L: 45.5, a: -2.5, b: -1.5 },
         { code: "RAL 7013", name: "Brown grey", L: 40.5, a: -0.5, b: 7.5 },
         { code: "RAL 7015", name: "Slate grey", L: 39.5, a: -1.5, b: -3.5 },
-        { code: "RAL 7016", name: "Anthracite grey", L: 32.5, a: -1.0, b: -3.2 },
+        { code: "RAL 7016", name: "Anthracite grey", L: 29.5, a: -1.0, b: -3.2 },
         { code: "RAL 7021", name: "Black grey", L: 28.5, a: -0.5, b: -1.8 },
         { code: "RAL 7022", name: "Umbra grey", L: 38.5, a: -0.5, b: 3.5 },
         { code: "RAL 7023", name: "Concrete grey", L: 56.5, a: -3.5, b: 3.5 },
-        { code: "RAL 7024", name: "Graphite grey", L: 39.5, a: -0.5, b: -2.5 },
+        { code: "RAL 7024", name: "Graphite grey", L: 35.5, a: -1.5, b: -2.8 },
         { code: "RAL 7026", name: "Granite grey", L: 36.5, a: -4.5, b: -2.5 },
         { code: "RAL 7030", name: "Stone grey", L: 60.5, a: -0.5, b: 4.5 },
         { code: "RAL 7031", name: "Blue grey", L: 48.5, a: -4.5, b: -5.5 },
@@ -508,13 +517,14 @@
 
     let currentCatalog = "ral_classic";
 
-    // Спектральные эталоны (каналы F2..F8)
+    // Спектральные отпечатки сенсора AS7341 (F2..F8)
     const RAL_SPECTRAL_FINGERPRINTS = {
       "1021": [0.156, 0.273, 0.443, 0.803, 0.879, 0.876, 0.879],
       "1017": [0.180, 0.280, 0.220, 0.580, 0.780, 0.810, 0.830],
       "3020": [0.044, 0.076, 0.033, 0.225, 0.394, 0.659, 0.688],
       "3018": [0.100, 0.140, 0.120, 0.280, 0.460, 0.650, 0.750],
       "3024": [0.030, 0.050, 0.020, 0.310, 0.520, 0.820, 0.890],
+      "7024": [0.085, 0.085, 0.082, 0.074, 0.074, 0.070, 0.066],
       "9003": [1.000, 1.000, 1.000, 1.000, 1.000, 1.000, 1.000],
       "9005": [0.011, 0.012, 0.011, 0.010, 0.010, 0.010, 0.007]
     };
@@ -579,7 +589,7 @@
       let x = a / 500 + y;
       let z = y - b / 200;
 
-      const fn = t => (t > 0.206897 ? Math.pow(t, 3) : (t - 16 / 116) / 7.787);
+      const fn = t => (t > 0.008856 ? Math.pow(t, 3) : (t - 16 / 116) / 7.787);
       x = 0.95047 * fn(x);
       y = 1.00000 * fn(y);
       z = 1.08883 * fn(z);
@@ -597,18 +607,19 @@
     }
 
     // ========================================================================
-    // ОБРАБОТКА ДАННЫХ И ПОИСК В КАТАЛОГЕ
+    // ОБРАБОТКА ДАННЫХ И ПОИСК С НОРМАЛИЗАЦИЕЙ СПЕКТРА
     // ========================================================================
     let lastReportData = null;
 
     function updateCatalogSearch(L, a, b, measuredRefl) {
       const list = CATALOGS[currentCatalog];
 
+      // Спектральная нормализация вектора F2..F8 к единичной сумме
       let normMeasured = null;
       if (measuredRefl && Array.isArray(measuredRefl) && measuredRefl.length >= 8) {
         const cleanRefl = measuredRefl.slice(1);
-        const sum = cleanRefl.reduce((acc, v) => acc + v, 0) || 1.0;
-        normMeasured = cleanRefl.map(v => v / sum);
+        const sum = cleanRefl.reduce((acc, v) => acc + v, 0);
+        normMeasured = sum > 0.001 ? cleanRefl.map(v => v / sum) : cleanRefl;
       }
 
       let ranked = list.map(item => {
@@ -621,8 +632,8 @@
 
         if (refFingerprint && normMeasured) {
           hasFingerprint = true;
-          const refSum = refFingerprint.reduce((acc, v) => acc + v, 0) || 1.0;
-          const normRef = refFingerprint.map(v => v / refSum);
+          const refSum = refFingerprint.reduce((acc, v) => acc + v, 0);
+          const normRef = refSum > 0.001 ? refFingerprint.map(v => v / refSum) : refFingerprint;
 
           const sumSquares = normMeasured.reduce((acc, val, idx) => {
             return acc + Math.pow(val - normRef[idx], 2);
@@ -632,7 +643,7 @@
 
         let combinedScore = dE;
         if (hasFingerprint) {
-          combinedScore = dE * 0.7 + (spectralDistance * 30.0) * 0.3;
+          combinedScore = dE * 0.7 + (spectralDistance * 25.0) * 0.3;
         }
 
         return {
@@ -755,6 +766,15 @@
       }
       const encoder = new TextEncoder();
       await rxChar.writeValue(encoder.encode("SCAN\n"));
+    }
+
+    async function sendCalibCmd(cmd) {
+      if (!rxChar) {
+        alert("Сначала подключите колориметр по Bluetooth!");
+        return;
+      }
+      const encoder = new TextEncoder();
+      await rxChar.writeValue(encoder.encode(cmd + "\n"));
     }
 
     function exportData() {
