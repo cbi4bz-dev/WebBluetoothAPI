@@ -2,1153 +2,562 @@
 <html lang="ru">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, shrink-to-fit=no">
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <meta name="theme-color" content="#07090e">
-  <link rel="manifest" href="manifest.json">
-  <title>Color Station Pro</title>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Color Station PRO</title>
   <style>
     :root {
-      --bg: #07090e;
-      --card-bg: rgba(22, 27, 38, 0.85);
-      --card-border: rgba(255, 255, 255, 0.1);
+      --bg: #0f172a;
+      --card-bg: #1e293b;
+      --border: #334155;
       --text: #f8fafc;
       --text-dim: #94a3b8;
-      --accent: #2563eb;
-      --accent-glow: rgba(37, 99, 235, 0.4);
-      --success: #10b981;
+      --accent: #38bdf8;
+      --accent-hover: #0ea5e9;
+      --success: #4ade80;
+      --warning: #facc15;
+      --danger: #f87171;
     }
+
     * {
       box-sizing: border-box;
       margin: 0;
       padding: 0;
-      -webkit-tap-highlight-color: transparent;
-      user-select: none;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
     }
-    html, body {
-      width: 100%;
-      min-height: 100%;
+
+    body {
       background-color: var(--bg);
       color: var(--text);
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-      font-size: 16px;
-    }
-    body {
-      display: flex;
-      flex-direction: column;
       padding: 16px;
-      padding-top: max(16px, env(safe-area-inset-top));
-      padding-bottom: max(16px, env(safe-area-inset-bottom));
-    }
-
-    #connectScreen {
       display: flex;
-      flex-direction: column;
-      justify-content: space-around;
-      align-items: center;
-      min-height: 80vh;
-      text-align: center;
-      width: 100%;
-    }
-    .hero-text h1 {
-      font-size: 2.2rem;
-      font-weight: 800;
-      margin-bottom: 8px;
-      background: linear-gradient(180deg, #fff 0%, #94a3b8 100%);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-    }
-    .hero-text p {
-      font-size: 1.1rem;
-      color: var(--text-dim);
-    }
-    .power-switch {
-      width: 120px;
-      height: 200px;
-      background: #111622;
-      border-radius: 60px;
-      padding: 10px;
-      box-shadow: 
-        inset 0 4px 12px rgba(0,0,0,0.8),
-        0 0 0 2px rgba(255,255,255,0.08),
-        0 20px 40px rgba(0,0,0,0.6);
-      cursor: pointer;
-      position: relative;
-      margin: 20px auto;
-    }
-    .power-knob {
-      width: 100px;
-      height: 100px;
-      background: linear-gradient(145deg, #1e2638, #151b27);
-      border-radius: 50%;
-      box-shadow: 0 8px 20px rgba(0,0,0,0.6), inset 0 1px 1px rgba(255,255,255,0.2);
-      display: flex;
-      align-items: center;
       justify-content: center;
-      transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), background 0.3s;
-    }
-    .power-icon {
-      width: 40px;
-      height: 40px;
-      stroke: var(--text-dim);
-      stroke-width: 2.5;
-      fill: none;
-    }
-    .power-switch.connecting .power-knob {
-      transform: translateY(80px);
-      background: linear-gradient(145deg, #2563eb, #1d4ed8);
-      box-shadow: 0 0 30px var(--accent-glow);
-    }
-    .power-switch.connecting .power-icon {
-      stroke: #fff;
-    }
-    .switch-label {
-      font-size: 1.1rem;
-      font-weight: 700;
-      color: var(--text-dim);
-      text-transform: uppercase;
-      letter-spacing: 0.1em;
     }
 
-    #dashboardScreen {
-      display: none;
-      flex-direction: column;
-      gap: 14px;
+    .container {
       width: 100%;
-    }
-    .top-nav {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      width: 100%;
-    }
-    .conn-status {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      font-size: 0.95rem;
-      font-weight: 600;
-      color: var(--success);
-      background: rgba(16, 185, 129, 0.1);
-      padding: 8px 16px;
-      border-radius: 20px;
-      border: 1px solid rgba(16, 185, 129, 0.2);
-    }
-    .pulse-dot {
-      width: 8px;
-      height: 8px;
-      border-radius: 50%;
-      background: var(--success);
-      box-shadow: 0 0 10px var(--success);
-    }
-    .top-actions {
-      display: flex;
-      gap: 6px;
-    }
-    .btn-action {
-      background: rgba(255,255,255,0.08);
-      border: 1px solid var(--card-border);
-      color: var(--text);
-      padding: 8px 12px;
-      border-radius: 20px;
-      font-size: 0.85rem;
-      font-weight: 600;
-      cursor: pointer;
-    }
-    .btn-action.primary {
-      background: var(--accent);
-      border-color: var(--accent);
-    }
-
-    .catalog-selector {
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      background: #111622;
-      border: 1px solid var(--card-border);
-      border-radius: 14px;
-      padding: 4px;
-      gap: 4px;
-      width: 100%;
-    }
-    .catalog-tab {
-      background: transparent;
-      border: none;
-      color: var(--text-dim);
-      padding: 10px 0;
-      border-radius: 10px;
-      font-size: 0.85rem;
-      font-weight: 700;
-      cursor: pointer;
-    }
-    .catalog-tab.active {
-      background: var(--accent);
-      color: #fff;
-      box-shadow: 0 2px 8px var(--accent-glow);
-    }
-
-    .dominant-swatch {
-      width: 100%;
-      min-height: 200px;
-      border-radius: 24px;
-      padding: 20px;
+      max-width: 480px;
       display: flex;
       flex-direction: column;
-      justify-content: space-between;
-      background: #161b26;
-      border: 1px solid rgba(255,255,255,0.15);
-      box-shadow: 0 16px 30px rgba(0,0,0,0.5);
-      transition: background-color 0.3s ease;
+      gap: 16px;
     }
-    .swatch-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: flex-start;
-      gap: 10px;
-    }
-    .quality-pill {
-      font-size: 0.8rem;
-      font-weight: 800;
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
-      padding: 6px 12px;
-      border-radius: 20px;
-      background: rgba(0, 0, 0, 0.65);
-      backdrop-filter: blur(10px);
-      border: 1px solid rgba(255, 255, 255, 0.15);
-    }
-    .hex-capsule {
-      font-family: monospace;
-      font-size: 1.1rem;
-      font-weight: 700;
-      padding: 6px 12px;
+
+    .card {
+      background-color: var(--card-bg);
+      border: 1px solid var(--border);
       border-radius: 12px;
-      background: rgba(0, 0, 0, 0.65);
-      backdrop-filter: blur(10px);
-      border: 1px solid rgba(255, 255, 255, 0.15);
-      color: #fff;
-    }
-    .main-code {
-      font-size: 2.8rem;
-      font-weight: 900;
-      letter-spacing: -0.04em;
-      line-height: 1.05;
-    }
-    .main-name {
-      font-size: 1.15rem;
-      font-weight: 600;
-      margin-top: 6px;
-      opacity: 0.9;
-    }
-
-    .btn-scan {
-      width: 100%;
-      background: linear-gradient(135deg, #2563eb, #1d4ed8);
-      color: #fff;
-      border: none;
-      border-radius: 16px;
       padding: 16px;
-      font-size: 1.1rem;
-      font-weight: 700;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 10px;
-      box-shadow: 0 4px 15px rgba(37, 99, 235, 0.35);
-      cursor: pointer;
-    }
-    .btn-scan:active {
-      transform: scale(0.98);
-      filter: brightness(0.95);
     }
 
-    .color-models-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 10px;
-      width: 100%;
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
     }
-    .model-card {
-      background: var(--card-bg);
-      border: 1px solid var(--card-border);
-      border-radius: 16px;
-      padding: 12px 14px;
-    }
-    .model-title {
-      font-size: 0.75rem;
+
+    .header h1 {
+      font-size: 1.2rem;
       font-weight: 700;
-      color: var(--text-dim);
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
-      margin-bottom: 4px;
     }
-    .model-val {
-      font-family: monospace;
-      font-size: 1.05rem;
-      font-weight: 700;
-      color: #fff;
+
+    .btn {
+      background-color: var(--accent);
+      color: #000;
+      border: none;
+      padding: 10px 16px;
+      border-radius: 8px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s;
     }
-    .cmyk-bars {
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: 6px;
+
+    .btn:hover {
+      background-color: var(--accent-hover);
+    }
+
+    .btn-outline {
+      background: transparent;
+      color: var(--text);
+      border: 1px solid var(--border);
+    }
+
+    .btn-outline:hover {
+      background-color: var(--border);
+    }
+
+    .swatch-area {
+      display: flex;
+      gap: 12px;
+      align-items: stretch;
       margin-top: 8px;
     }
-    .cmyk-bar-wrap {
-      display: flex;
-      flex-direction: column;
-      gap: 4px;
-      font-size: 0.75rem;
-      font-weight: 700;
-      color: var(--text-dim);
-      text-align: center;
-    }
-    .cmyk-track {
-      height: 6px;
-      background: rgba(255,255,255,0.1);
-      border-radius: 3px;
-      overflow: hidden;
-    }
-    .cmyk-fill {
-      height: 100%;
-      width: 0%;
-      border-radius: 3px;
-      transition: width 0.3s ease;
+
+    .swatch {
+      width: 80px;
+      height: 80px;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      background-color: #000;
+      flex-shrink: 0;
     }
 
-    .alts-wrapper {
+    .match-details {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      gap: 4px;
+    }
+
+    .match-code {
+      font-size: 1.5rem;
+      font-weight: 700;
+    }
+
+    .match-name {
+      color: var(--text-dim);
+      font-size: 0.95rem;
+    }
+
+    .pill {
+      display: inline-block;
+      font-size: 0.75rem;
+      font-weight: 700;
+      padding: 2px 8px;
+      border-radius: 9999px;
+      width: fit-content;
+      margin-top: 4px;
+    }
+
+    .delta-val {
+      font-size: 1.1rem;
+      font-weight: 700;
+      margin-top: 6px;
+    }
+
+    .alt-list {
       display: flex;
       flex-direction: column;
       gap: 8px;
-      width: 100%;
+      margin-top: 12px;
     }
-    .alts-title {
-      font-size: 0.8rem;
-      font-weight: 700;
-      color: var(--text-dim);
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
-      padding-left: 4px;
-    }
-    .alt-tile {
+
+    .alt-item {
       display: flex;
       align-items: center;
-      background: var(--card-bg);
-      border: 1px solid var(--card-border);
-      border-radius: 16px;
-      padding: 10px 14px;
-      gap: 12px;
-      width: 100%;
+      justify-content: space-between;
+      padding: 8px 12px;
+      background: #0f172a80;
+      border-radius: 6px;
+      border: 1px solid var(--border);
     }
-    .alt-capsule {
-      width: 48px;
-      height: 48px;
-      border-radius: 12px;
-      border: 1px solid rgba(255,255,255,0.15);
-      flex-shrink: 0;
+
+    .alt-info {
+      display: flex;
+      align-items: center;
+      gap: 8px;
     }
-    .alt-name {
-      font-size: 1.05rem;
-      font-weight: 800;
+
+    .mini-swatch {
+      width: 24px;
+      height: 24px;
+      border-radius: 4px;
+      border: 1px solid var(--border);
     }
-    .alt-de-tag {
-      font-size: 0.95rem;
-      font-weight: 700;
+
+    .coords-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+      text-align: center;
+      margin-top: 8px;
+    }
+
+    .coord-box {
+      background: #0f172a80;
+      padding: 8px;
+      border-radius: 6px;
+      border: 1px solid var(--border);
+    }
+
+    .coord-label {
+      font-size: 0.75rem;
       color: var(--text-dim);
-      background: rgba(255, 255, 255, 0.08);
-      padding: 6px 10px;
-      border-radius: 8px;
+    }
+
+    .coord-value {
+      font-size: 1rem;
+      font-weight: 600;
+    }
+
+    .actions {
+      display: flex;
+      gap: 8px;
+    }
+
+    .actions button {
+      flex: 1;
     }
   </style>
 </head>
 <body>
-
-  <!-- Экран включения -->
-  <section id="connectScreen">
-    <div class="hero-text">
-      <h1>Color Station Pro</h1>
-      <p>Спектроколориметрическая система</p>
+  <div class="container">
+    <!-- Шапка подключения -->
+    <div class="card header">
+      <div>
+        <h1>Color Station PRO</h1>
+        <div id="bleStatus" style="font-size: 0.8rem; color: var(--text-dim);">Статус: Отключено</div>
+      </div>
+      <button id="btnConnect" class="btn" onclick="toggleConnect()">Подключить</button>
     </div>
 
-    <div>
-      <div id="powerBtn" class="power-switch" onclick="handlePowerToggle()">
-        <div class="power-knob">
-          <svg class="power-icon" viewBox="0 0 24 24">
-            <path d="M18.36 6.64a9 9 0 1 1-12.73 0M12 2v10" stroke-linecap="round" stroke-linejoin="round"/>
-          </svg>
-        </div>
-      </div>
-      <div id="switchStatus" class="switch-label">Включить прибор</div>
-    </div>
-
-    <div style="font-size: 0.85rem; color: rgba(255,255,255,0.3);">Dual-Engine • CIE D65/10° + Spectral Fingerprint</div>
-  </section>
-
-  <!-- Экран панели управления -->
-  <section id="dashboardScreen">
-    <div class="top-nav">
-      <div class="conn-status">
-        <div class="pulse-dot"></div>
-        <span>Онлайн</span>
-      </div>
-      <div class="top-actions">
-        <button class="btn-action primary" onclick="exportToPDF()">PDF</button>
-        <button id="btnCopy" class="btn-action" onclick="copyReport()">Текст</button>
-        <button class="btn-action" onclick="disconnectDevice()">Выкл</button>
-      </div>
-    </div>
-
-    <div class="catalog-selector">
-      <button class="catalog-tab active" onclick="setCatalog('ral_classic')">RAL Classic</button>
-      <button class="catalog-tab" onclick="setCatalog('ral_design')">RAL Design</button>
-      <button class="catalog-tab" onclick="setCatalog('ncs')">NCS</button>
-      <button class="catalog-tab" onclick="setCatalog('pantone')">Pantone</button>
-    </div>
-
-    <div id="dominantSwatch" class="dominant-swatch">
-      <div class="swatch-header">
-        <div id="qualityPill" class="quality-pill">ОЖИДАНИЕ ЗАМЕРА</div>
-        <div id="hexVal" class="hex-capsule">#------</div>
-      </div>
-      <div class="swatch-body">
-        <div id="mainColorCode" class="main-code">----</div>
-        <div id="mainColorName" class="main-name">Нажмите «Сделать замер»</div>
-      </div>
-    </div>
-
-    <button id="btnScan" class="btn-scan" onclick="triggerRemoteScan()">
-      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-        <circle cx="12" cy="12" r="10"></circle>
-        <line x1="12" y1="8" x2="12" y2="16"></line>
-        <line x1="8" y1="12" x2="16" y2="12"></line>
-      </svg>
-      Сделать замер
-    </button>
-
-    <div class="color-models-grid">
-      <div class="model-card" style="grid-column: span 2;">
-        <div style="display: flex; justify-content: space-between; align-items: baseline;">
-          <div class="model-title">CMYK (Печатный стандарт)</div>
-          <div id="cmykText" style="font-size: 0.95rem; font-weight: 700; color: #60a5fa;">C:0 M:0 Y:0 K:0</div>
-        </div>
-        <div class="cmyk-bars">
-          <div class="cmyk-bar-wrap"><span>C</span><div class="cmyk-track"><div id="barC" class="cmyk-fill" style="background:#06b6d4;"></div></div></div>
-          <div class="cmyk-bar-wrap"><span>M</span><div class="cmyk-track"><div id="barM" class="cmyk-fill" style="background:#ec4899;"></div></div></div>
-          <div class="cmyk-bar-wrap"><span>Y</span><div class="cmyk-track"><div id="barY" class="cmyk-fill" style="background:#eab308;"></div></div></div>
-          <div class="cmyk-bar-wrap"><span>K</span><div class="cmyk-track"><div id="barK" class="cmyk-fill" style="background:#94a3b8;"></div></div></div>
+    <!-- Результат сравнения -->
+    <div class="card">
+      <div style="font-size: 0.85rem; color: var(--text-dim); text-transform: uppercase; font-weight: 600;">Основное совпадение</div>
+      <div class="swatch-area">
+        <div id="mainSwatch" class="swatch"></div>
+        <div class="match-details">
+          <div id="mainColorCode" class="match-code">----</div>
+          <div id="mainColorName" class="match-name">Ожидание замера...</div>
+          <div id="qualityPill" class="pill" style="color: var(--text-dim);">---</div>
+          <div id="deltaText" class="delta-val">-- <span style="font-size:0.8rem; font-weight:normal; color:var(--text-dim);">ΔE</span></div>
         </div>
       </div>
 
-      <div class="model-card">
-        <div class="model-title">CIE L*a*b*</div>
-        <div id="labText" class="model-val">-- -- --</div>
-      </div>
-
-      <div class="model-card">
-        <div class="model-title">sRGB (Экран)</div>
-        <div id="rgbText" class="model-val">-- -- --</div>
-      </div>
-
-      <div class="model-card">
-        <div class="model-title">CIE L*C*h°</div>
-        <div id="lchText" class="model-val">-- -- --</div>
-      </div>
-
-      <div class="model-card">
-        <div class="model-title">ΔE00 / Совпадение</div>
-        <div id="deltaText" class="model-val">0.00 <span style="font-size:0.8rem; font-weight:normal; color:var(--text-dim);">ΔE</span></div>
+      <div style="margin-top: 16px; font-size: 0.8rem; color: var(--text-dim); text-transform: uppercase; font-weight: 600;">Ближайшие артикулы</div>
+      <div class="alt-list">
+        <div class="alt-item">
+          <div class="alt-info">
+            <div id="alt1Swatch" class="mini-swatch"></div>
+            <span id="alt1Code" style="font-size: 0.9rem;">----</span>
+          </div>
+          <span id="alt1De" style="font-size: 0.85rem; color: var(--text-dim);">--</span>
+        </div>
+        <div class="alt-item">
+          <div class="alt-info">
+            <div id="alt2Swatch" class="mini-swatch"></div>
+            <span id="alt2Code" style="font-size: 0.9rem;">----</span>
+          </div>
+          <span id="alt2De" style="font-size: 0.85rem; color: var(--text-dim);">--</span>
+        </div>
       </div>
     </div>
 
-    <div class="alts-wrapper">
-      <div class="alts-title">Ближайшие артикулы каталога</div>
-      <div class="alt-tile">
-        <div id="alt1Swatch" class="alt-capsule"></div>
-        <div style="flex:1;">
-          <div id="alt1Code" class="alt-name">----</div>
+    <!-- Координаты сенсора -->
+    <div class="card">
+      <div style="font-size: 0.85rem; color: var(--text-dim); text-transform: uppercase; font-weight: 600;">Координаты CIE Lab</div>
+      <div class="coords-grid">
+        <div class="coord-box">
+          <div class="coord-label">L*</div>
+          <div id="valL" class="coord-value">0.0</div>
         </div>
-        <div id="alt1De" class="alt-de-tag">ΔE --</div>
-      </div>
-      <div class="alt-tile">
-        <div id="alt2Swatch" class="alt-capsule"></div>
-        <div style="flex:1;">
-          <div id="alt2Code" class="alt-name">----</div>
+        <div class="coord-box">
+          <div class="coord-label">a*</div>
+          <div id="valA" class="coord-value">0.0</div>
         </div>
-        <div id="alt2De" class="alt-de-tag">ΔE --</div>
+        <div class="coord-box">
+          <div class="coord-label">b*</div>
+          <div id="valB" class="coord-value">0.0</div>
+        </div>
       </div>
     </div>
-  </section>
 
-<script>
-  if ('serviceWorker' in navigator) {
-    let refreshing = false;
-    navigator.serviceWorker.addEventListener('controllerchange', () => {
-      if (!refreshing) {
-        refreshing = true;
-        window.location.reload();
-      }
-    });
+    <!-- Кнопки управления -->
+    <div class="actions">
+      <button class="btn" onclick="sendScanCmd()">Сделать замер</button>
+      <button class="btn btn-outline" onclick="exportData()">Экспорт</button>
+    </div>
+  </div>
 
-    window.addEventListener('load', () => {
-      navigator.serviceWorker.register('./sw.js').then((reg) => {
-        reg.update();
-      }).catch((err) => console.log('SW error:', err));
-    });
-  }
-
-  const SERVICE_UUID = "6e400001-b5a3-f393-e0a9-e50e24dcca9e";
-  const CHAR_RX_UUID = "6e400002-b5a3-f393-e0a9-e50e24dcca9e";
-  const CHAR_TX_UUID = "6e400003-b5a3-f393-e0a9-e50e24dcca9e";
-
-  let bleDevice = null;
-  let rxChar = null;
-  let pTxChar = null;
-  let currentCatalog = 'ral_classic';
-  let lastMeasuredLab = null;
-  let lastMeasuredRefl = null;
-  let lastReportData = null;
-
-  // ==========================================================================
-  // БАЗА СПЕКТРАЛЬНЫХ ОТПЕЧАТКОВ F2..F8 (F1 ИСКЛЮЧЁН ИЗ-ЗА ШУМА СВЕТОДИОДА)
-  // Ключи заданы числовыми строками без префиксов для надёжности парсинга
-  // ==========================================================================
-const RAL_SPECTRAL_FINGERPRINTS = {
-    "1021": [0.156, 0.273, 0.443, 0.803, 0.879, 0.876, 0.879],
-    "1017": [0.180, 0.280, 0.220, 0.580, 0.780, 0.810, 0.830],
-    "3020": [0.044, 0.076, 0.033, 0.225, 0.394, 0.659, 0.688],
-    "3018": [0.100, 0.140, 0.120, 0.280, 0.460, 0.650, 0.750],
-    "3024": [0.030, 0.050, 0.020, 0.310, 0.520, 0.820, 0.890],
-    "9003": [1.000, 1.000, 1.000, 1.000, 1.000, 1.000, 1.000],
-    "9005": [0.011, 0.012, 0.011, 0.010, 0.010, 0.010, 0.007]
-  };
-
-  const CATALOGS = {
-    ral_classic: [
-      {code:"RAL 1000", name:"Green beige", L:76.5, a:1.2, b:28.1},
-      {code:"RAL 1001", name:"Beige", L:75.8, a:5.7, b:26.2},
-      {code:"RAL 1002", name:"Sand yellow", L:73.2, a:7.4, b:39.6},
-      {code:"RAL 1003", name:"Signal yellow", L:73.5, a:17.2, b:71.5},
-      {code:"RAL 1004", name:"Golden yellow", L:69.2, a:17.8, b:66.3},
-      {code:"RAL 1005", name:"Honey yellow", L:63.8, a:14.2, b:59.1},
-      {code:"RAL 1006", name:"Maize yellow", L:67.4, a:18.5, b:65.2},
-      {code:"RAL 1007", name:"Daffodil yellow", L:67.1, a:22.4, b:66.8},
-      {code:"RAL 1011", name:"Brown beige", L:57.8, a:13.1, b:33.4},
-      {code:"RAL 1012", name:"Lemon yellow", L:73.8, a:4.2, b:60.8},
-      {code:"RAL 1013", name:"Oyster white", L:86.8, a:0.4, b:10.8},
-      {code:"RAL 1014", name:"Ivory", L:80.4, a:3.7, b:24.1},
-      {code:"RAL 1015", name:"Light ivory", L:84.4, a:2.8, b:16.9},
-      {code:"RAL 1016", name:"Sulfur yellow", L:89.2, a:-10.8, b:68.4},
-      {code:"RAL 1017", name:"Saffron yellow", L:75.4, a:21.2, b:53.2},
-      {code:"RAL 1018", name:"Zinc yellow", L:87.1, a:-4.7, b:75.3},
-      {code:"RAL 1019", name:"Grey beige", L:64.2, a:3.8, b:15.4},
-      {code:"RAL 1020", name:"Olive yellow", L:60.8, a:1.2, b:25.6},
-      {code:"RAL 1021", name:"Colza yellow", L:76.5, a:14.3, b:76.9},
-      {code:"RAL 1023", name:"Traffic yellow", L:78.4, a:11.2, b:78.8},
-      {code:"RAL 1024", name:"Ochre yellow", L:61.7, a:9.6, b:40.8},
-      {code:"RAL 1026", name:"Luminous yellow", L:92.1, a:-22.4, b:88.2},
-      {code:"RAL 1027", name:"Curry", L:54.6, a:8.4, b:48.2},
-      {code:"RAL 1028", name:"Melon yellow", L:72.5, a:30.1, b:75.4},
-      {code:"RAL 1032", name:"Broom yellow", L:71.8, a:12.6, b:68.4},
-      {code:"RAL 1033", name:"Dahlia yellow", L:71.2, a:27.4, b:68.8},
-      {code:"RAL 1034", name:"Pastel yellow", L:71.5, a:23.5, b:48.4},
-      {code:"RAL 1035", name:"Pearl beige", L:56.4, a:2.2, b:10.8},
-      {code:"RAL 1036", name:"Pearl gold", L:45.8, a:4.8, b:22.1},
-      {code:"RAL 1037", name:"Sun yellow", L:68.4, a:26.8, b:71.2},
-      {code:"RAL 2000", name:"Yellow orange", L:57.8, a:38.6, b:57.5},
-      {code:"RAL 2001", name:"Red orange", L:44.2, a:45.2, b:42.1},
-      {code:"RAL 2002", name:"Vermilion", L:45.8, a:51.4, b:44.2},
-      {code:"RAL 2003", name:"Pastel orange", L:64.5, a:43.8, b:59.2},
-      {code:"RAL 2004", name:"Pure orange", L:56.1, a:54.4, b:59.8},
-      {code:"RAL 2005", name:"Luminous orange", L:58.4, a:72.1, b:62.1},
-      {code:"RAL 2007", name:"Luminous bright orange", L:71.2, a:46.1, b:74.2},
-      {code:"RAL 2008", name:"Bright red orange", L:57.4, a:47.8, b:56.4},
-      {code:"RAL 2009", name:"Traffic orange", L:52.1, a:52.4, b:54.1},
-      {code:"RAL 2010", name:"Signal orange", L:51.4, a:45.6, b:46.8},
-      {code:"RAL 2011", name:"Deep orange", L:58.9, a:42.1, b:58.7},
-      {code:"RAL 2012", name:"Salmon orange", L:54.8, a:39.4, b:34.2},
-      {code:"RAL 2013", name:"Pearl orange", L:37.2, a:36.4, b:29.8},
-      {code:"RAL 3000", name:"Flame red", L:45.2, a:50.1, b:37.4},
-      {code:"RAL 3001", name:"Signal red", L:41.2, a:50.8, b:32.1},
-      {code:"RAL 3002", name:"Carmine red", L:39.8, a:48.6, b:31.2},
-      {code:"RAL 3003", name:"Ruby red", L:32.7, a:43.1, b:22.4},
-      {code:"RAL 3004", name:"Purple red", L:27.4, a:36.2, b:16.1},
-      {code:"RAL 3005", name:"Wine red", L:25.3, a:29.5, b:11.2},
-      {code:"RAL 3007", name:"Black red", L:21.2, a:18.4, b:5.6},
-      {code:"RAL 3009", name:"Oxide red", L:31.2, a:28.4, b:19.5},
-      {code:"RAL 3011", name:"Brown red", L:32.8, a:38.4, b:26.1},
-      {code:"RAL 3012", name:"Beige red", L:61.4, a:21.8, b:22.4},
-      {code:"RAL 3013", name:"Tomato red", L:38.4, a:42.1, b:27.4},
-      {code:"RAL 3014", name:"Antique pink", L:58.4, a:32.8, b:16.8},
-      {code:"RAL 3015", name:"Light pink", L:69.8, a:24.1, b:11.8},
-      {code:"RAL 3016", name:"Coral red", L:44.2, a:41.8, b:31.2},
-      {code:"RAL 3017", name:"Rose", L:54.2, a:48.4, b:22.4},
-      {code:"RAL 3018", name:"Strawberry red", L:48.4, a:52.1, b:24.6},
-      {code:"RAL 3020", name:"Traffic red", L:46.9, a:59.8, b:44.5},
-      {code:"RAL 3022", name:"Salmon pink", L:58.4, a:36.4, b:32.1},
-      {code:"RAL 3024", name:"Luminous red", L:52.1, a:78.4, b:54.2},
-      {code:"RAL 3026", name:"Luminous bright red", L:56.4, a:76.2, b:51.2},
-      {code:"RAL 3027", name:"Raspberry red", L:41.2, a:52.4, b:26.4},
-      {code:"RAL 3028", name:"Pure red", L:45.8, a:62.4, b:43.1},
-      {code:"RAL 3031", name:"Orient red", L:38.4, a:44.2, b:24.1},
-      {code:"RAL 3032", name:"Pearl ruby red", L:28.4, a:36.2, b:18.4},
-      {code:"RAL 3033", name:"Pearl pink", L:47.2, a:42.1, b:26.4},
-      {code:"RAL 4001", name:"Red lilac", L:48.2, a:21.4, b:-14.2},
-      {code:"RAL 4002", name:"Red violet", L:37.4, a:34.2, b:12.4},
-      {code:"RAL 4003", name:"Heather violet", L:54.8, a:45.6, b:-10.4},
-      {code:"RAL 4004", name:"Claret violet", L:27.8, a:34.2, b:4.8},
-      {code:"RAL 4005", name:"Blue lilac", L:48.7, a:18.5, b:-27.8},
-      {code:"RAL 4006", name:"Traffic purple", L:42.4, a:46.2, b:-18.7},
-      {code:"RAL 4007", name:"Purple violet", L:24.2, a:22.1, b:-6.4},
-      {code:"RAL 4008", name:"Signal violet", L:40.1, a:41.2, b:-19.4},
-      {code:"RAL 4009", name:"Pastel violet", L:61.2, a:12.4, b:1.8},
-      {code:"RAL 4010", name:"Telemagenta", L:49.3, a:55.6, b:-4.5},
-      {code:"RAL 4011", name:"Pearl violet", L:42.1, a:14.2, b:-12.4},
-      {code:"RAL 4012", name:"Pearl blackberry", L:45.8, a:0.8, b:-4.2},
-      {code:"RAL 5000", name:"Violet blue", L:35.4, a:-0.8, b:-22.4},
-      {code:"RAL 5001", name:"Green blue", L:31.2, a:-16.4, b:-21.2},
-      {code:"RAL 5002", name:"Ultramarine blue", L:24.1, a:13.5, b:-44.8},
-      {code:"RAL 5003", name:"Sapphire blue", L:22.4, a:0.8, b:-24.1},
-      {code:"RAL 5004", name:"Black blue", L:14.2, a:0.4, b:-8.4},
-      {code:"RAL 5005", name:"Signal blue", L:33.2, a:-1.9, b:-37.2},
-      {code:"RAL 5007", name:"Brilliant blue", L:45.2, a:-10.8, b:-26.4},
-      {code:"RAL 5008", name:"Grey blue", L:27.4, a:-4.8, b:-10.4},
-      {code:"RAL 5009", name:"Azure blue", L:39.8, a:-14.2, b:-23.1},
-      {code:"RAL 5010", name:"Gentian blue", L:32.8, a:-4.1, b:-32.9},
-      {code:"RAL 5011", name:"Steel blue", L:20.4, a:0.2, b:-16.4},
-      {code:"RAL 5012", name:"Light blue", L:55.4, a:-14.2, b:-28.4},
-      {code:"RAL 5013", name:"Cobalt blue", L:20.8, a:3.4, b:-26.4},
-      {code:"RAL 5014", name:"Pigeon blue", L:52.4, a:-4.8, b:-16.4},
-      {code:"RAL 5015", name:"Sky blue", L:48.2, a:-13.5, b:-31.7},
-      {code:"RAL 5017", name:"Traffic blue", L:28.4, a:-7.4, b:-28.4},
-      {code:"RAL 5018", name:"Turquoise blue", L:54.2, a:-24.1, b:-12.4},
-      {code:"RAL 5019", name:"Capri blue", L:37.4, a:-12.4, b:-27.4},
-      {code:"RAL 5020", name:"Ocean blue", L:26.4, a:-16.4, b:-14.2},
-      {code:"RAL 5021", name:"Water blue", L:44.2, a:-28.4, b:-12.4},
-      {code:"RAL 5022", name:"Night blue", L:21.2, a:8.4, b:-31.2},
-      {code:"RAL 5023", name:"Distant blue", L:44.8, a:-4.8, b:-24.1},
-      {code:"RAL 5024", name:"Pastel blue", L:58.4, a:-12.4, b:-18.4},
-      {code:"RAL 5025", name:"Pearl gentian blue", L:41.2, a:-18.4, b:-16.4},
-      {code:"RAL 5026", name:"Pearl night blue", L:21.8, a:2.4, b:-24.1},
-      {code:"RAL 6000", name:"Patina green", L:48.4, a:-26.4, b:3.4},
-      {code:"RAL 6001", name:"Emerald green", L:44.7, a:-34.5, b:26.2},
-      {code:"RAL 6002", name:"Leaf green", L:43.4, a:-30.2, b:20.8},
-      {code:"RAL 6003", name:"Olive green", L:38.4, a:-10.8, b:12.4},
-      {code:"RAL 6004", name:"Blue green", L:26.4, a:-18.4, b:-2.4},
-      {code:"RAL 6005", name:"Moss green", L:29.5, a:-14.8, b:7.2},
-      {code:"RAL 6006", name:"Grey olive", L:26.4, a:-1.8, b:4.8},
-      {code:"RAL 6007", name:"Bottle green", L:23.4, a:-8.4, b:7.4},
-      {code:"RAL 6008", name:"Brown green", L:22.4, a:-0.8, b:4.2},
-      {code:"RAL 6009", name:"Fir green", L:23.8, a:-9.8, b:4.8},
-      {code:"RAL 6010", name:"Grass green", L:45.8, a:-28.4, b:32.4},
-      {code:"RAL 6011", name:"Reseda green", L:51.2, a:-18.4, b:18.4},
-      {code:"RAL 6012", name:"Black green", L:24.1, a:-7.4, b:1.2},
-      {code:"RAL 6013", name:"Reed green", L:51.4, a:-6.8, b:16.4},
-      {code:"RAL 6014", name:"Yellow olive", L:28.4, a:-0.8, b:8.4},
-      {code:"RAL 6015", name:"Black olive", L:26.4, a:-0.4, b:4.2},
-      {code:"RAL 6016", name:"Turquoise green", L:40.1, a:-36.4, b:8.4},
-      {code:"RAL 6017", name:"May green", L:53.4, a:-29.8, b:34.2},
-      {code:"RAL 6018", name:"Yellow green", L:60.3, a:-36.8, b:46.1},
-      {code:"RAL 6019", name:"Pastel green", L:81.2, a:-14.2, b:14.2},
-      {code:"RAL 6020", name:"Chrome green", L:29.4, a:-9.4, b:9.8},
-      {code:"RAL 6021", name:"Pale green", L:63.8, a:-14.2, b:14.8},
-      {code:"RAL 6022", name:"Olive drab", L:21.2, a:2.4, b:7.4},
-      {code:"RAL 6024", name:"Traffic green", L:48.2, a:-45.1, b:16.5},
-      {code:"RAL 6025", name:"Fern green", L:46.8, a:-22.4, b:27.4},
-      {code:"RAL 6026", name:"Opal green", L:36.4, a:-34.2, b:4.8},
-      {code:"RAL 6027", name:"Light green", L:70.4, a:-24.1, b:-8.4},
-      {code:"RAL 6028", name:"Pine green", L:35.4, a:-18.4, b:4.8},
-      {code:"RAL 6029", name:"Mint green", L:41.2, a:-41.2, b:14.8},
-      {code:"RAL 6031", name:"Bronze green", L:38.4, a:-4.8, b:9.4},
-      {code:"RAL 6032", name:"Signal green", L:51.2, a:-38.4, b:17.4},
-      {code:"RAL 6033", name:"Mint turquoise", L:53.4, a:-24.1, b:-1.2},
-      {code:"RAL 6034", name:"Pastel turquoise", L:65.4, a:-18.4, b:-7.4},
-      {code:"RAL 6035", name:"Pearl green", L:30.4, a:-24.1, b:12.4},
-      {code:"RAL 6036", name:"Pearl opal green", L:32.1, a:-28.4, b:2.4},
-      {code:"RAL 6037", name:"Pure green", L:51.4, a:-46.8, b:38.4},
-      {code:"RAL 6038", name:"Luminous green", L:59.4, a:-58.4, b:47.4},
-      {code:"RAL 7000", name:"Squirrel grey", L:56.4, a:-2.8, b:-5.8},
-      {code:"RAL 7001", name:"Silver grey", L:62.4, a:-2.1, b:-3.8},
-      {code:"RAL 7002", name:"Olive grey", L:54.8, a:-0.8, b:9.8},
-      {code:"RAL 7003", name:"Moss grey", L:51.2, a:-0.8, b:4.8},
-      {code:"RAL 7004", name:"Signal grey", L:65.4, a:-0.4, b:-0.8},
-      {code:"RAL 7005", name:"Mouse grey", L:47.2, a:-1.2, b:0.8},
-      {code:"RAL 7006", name:"Beige grey", L:48.4, a:1.8, b:8.4},
-      {code:"RAL 7008", name:"Khaki grey", L:42.1, a:3.8, b:18.4},
-      {code:"RAL 7009", name:"Green grey", L:41.2, a:-1.8, b:3.4},
-      {code:"RAL 7010", name:"Tarpaulin grey", L:39.8, a:-1.2, b:1.8},
-      {code:"RAL 7011", name:"Iron grey", L:40.1, a:-1.4, b:-2.8},
-      {code:"RAL 7012", name:"Basalt grey", L:40.8, a:-1.2, b:-1.4},
-      {code:"RAL 7013", name:"Brown grey", L:38.4, a:0.8, b:6.4},
-      {code:"RAL 7015", name:"Slate grey", L:36.4, a:-0.4, b:-1.8},
-      {code:"RAL 7016", name:"Anthracite grey", L:29.3, a:-0.6, b:-3.7},
-      {code:"RAL 7021", name:"Black grey", L:22.4, a:-0.2, b:-1.4},
-      {code:"RAL 7022", name:"Umbra grey", L:33.4, a:0.2, b:2.4},
-      {code:"RAL 7023", name:"Concrete grey", L:56.4, a:-1.4, b:4.8},
-      {code:"RAL 7024", name:"Graphite grey", L:33.7, a:-0.7, b:-2.9},
-      {code:"RAL 7026", name:"Granite grey", L:30.4, a:-2.8, b:-2.1},
-      {code:"RAL 7030", name:"Stone grey", L:60.4, a:-0.4, b:4.8},
-      {code:"RAL 7031", name:"Blue grey", L:45.8, a:-2.1, b:-4.8},
-      {code:"RAL 7032", name:"Pebble grey", L:72.4, a:-0.4, b:7.8},
-      {code:"RAL 7033", name:"Cement grey", L:56.4, a:-1.8, b:4.2},
-      {code:"RAL 7034", name:"Yellow grey", L:58.4, a:-0.4, b:10.8},
-      {code:"RAL 7035", name:"Light grey", L:82.1, a:-1.0, b:0.8},
-      {code:"RAL 7036", name:"Platinum grey", L:62.4, a:0.8, b:0.4},
-      {code:"RAL 7037", name:"Dusty grey", L:53.4, a:-0.2, b:-0.4},
-      {code:"RAL 7038", name:"Agate grey", L:73.4, a:-0.8, b:2.4},
-      {code:"RAL 7039", name:"Quartz grey", L:45.8, a:0.8, b:4.8},
-      {code:"RAL 7040", name:"Window grey", L:67.2, a:-1.4, b:-2.8},
-      {code:"RAL 7042", name:"Traffic grey A", L:61.4, a:-1.2, b:-0.8},
-      {code:"RAL 7043", name:"Traffic grey B", L:37.4, a:-0.4, b:-0.4},
-      {code:"RAL 7044", name:"Silk grey", L:73.8, a:0.4, b:6.4},
-      {code:"RAL 7045", name:"Telegrey 1", L:62.4, a:-1.2, b:-1.8},
-      {code:"RAL 7046", name:"Telegrey 2", L:56.8, a:-1.4, b:-2.4},
-      {code:"RAL 7047", name:"Telegrey 4", L:78.9, a:-0.2, b:0.7},
-      {code:"RAL 7048", name:"Pearl mouse grey", L:54.2, a:0.4, b:3.4},
-      {code:"RAL 8000", name:"Green brown", L:48.4, a:6.8, b:28.4},
-      {code:"RAL 8001", name:"Ochre brown", L:46.1, a:18.2, b:36.4},
-      {code:"RAL 8002", name:"Signal brown", L:34.2, a:21.4, b:19.8},
-      {code:"RAL 8003", name:"Clay brown", L:39.4, a:21.2, b:31.2},
-      {code:"RAL 8004", name:"Copper brown", L:38.4, a:29.4, b:28.4},
-      {code:"RAL 8007", name:"Fawn brown", L:36.4, a:18.4, b:24.1},
-      {code:"RAL 8008", name:"Olive brown", L:38.4, a:16.4, b:28.4},
-      {code:"RAL 8011", name:"Nut brown", L:30.2, a:13.8, b:17.5},
-      {code:"RAL 8012", name:"Red brown", L:30.4, a:22.4, b:16.4},
-      {code:"RAL 8014", name:"Sepia brown", L:26.4, a:9.8, b:12.4},
-      {code:"RAL 8015", name:"Chestnut brown", L:27.4, a:19.4, b:16.4},
-      {code:"RAL 8016", name:"Mahogany brown", L:25.4, a:17.4, b:14.2},
-      {code:"RAL 8017", name:"Chocolate brown", L:25.8, a:7.6, b:9.8},
-      {code:"RAL 8019", name:"Grey brown", L:25.4, a:1.8, b:2.4},
-      {code:"RAL 8022", name:"Black brown", L:16.4, a:0.8, b:0.8},
-      {code:"RAL 8023", name:"Orange brown", L:49.8, a:28.4, b:38.4},
-      {code:"RAL 8024", name:"Beige brown", L:40.1, a:14.2, b:22.4},
-      {code:"RAL 8025", name:"Pale brown", L:42.1, a:11.2, b:16.4},
-      {code:"RAL 8028", name:"Terra brown", L:29.4, a:8.4, b:11.8},
-      {code:"RAL 8029", name:"Pearl copper", L:32.1, a:26.4, b:22.4},
-      {code:"RAL 9001", name:"Cream", L:91.2, a:-0.8, b:5.8},
-      {code:"RAL 9002", name:"Grey white", L:87.8, a:-1.4, b:3.4},
-      {code:"RAL 9003", name:"Signal white", L:95.2, a:-0.6, b:1.8},
-      {code:"RAL 9004", name:"Signal black", L:18.4, a:-0.2, b:-0.8},
-      {code:"RAL 9005", name:"Jet black", L:5.1, a:0.1, b:-0.5},
-      {code:"RAL 9006", name:"White aluminium", L:68.4, a:-0.8, b:0.4},
-      {code:"RAL 9007", name:"Grey aluminium", L:56.4, a:-0.4, b:0.8},
-      {code:"RAL 9010", name:"Pure white", L:93.8, a:0.2, b:5.1},
-      {code:"RAL 9011", name:"Graphite black", L:16.4, a:-0.4, b:-0.8},
-      {code:"RAL 9016", name:"Traffic white", L:96.1, a:-0.2, b:1.1},
-      {code:"RAL 9017", name:"Traffic black", L:16.8, a:0.2, b:-0.2},
-      {code:"RAL 9018", name:"Papyrus white", L:81.4, a:-1.4, b:1.8},
-      {code:"RAL 9022", name:"Pearl light grey", L:60.4, a:-0.4, b:0.8},
-      {code:"RAL 9023", name:"Pearl dark grey", L:52.4, a:-0.4, b:-0.2}
-    ],
-    ral_design: [
-      {code:"RAL 000 15 00", name:"Graphite black", L:15.0, a:0.0, b:0.0},
-      {code:"RAL 000 85 00", name:"Signal light grey", L:85.0, a:0.0, b:0.0},
-      {code:"RAL 080 80 60", name:"Sun gold", L:80.0, a:18.5, b:57.1},
-      {code:"RAL 120 70 40", name:"Spring leaf", L:70.0, a:-34.6, b:20.0},
-      {code:"RAL 160 50 35", name:"Mint shade", L:50.0, a:-32.8, b:11.9},
-      {code:"RAL 260 40 45", name:"Ocean deep", L:40.0, a:7.8, b:-44.3},
-      {code:"RAL 350 40 40", name:"Carmine purple", L:40.0, a:38.6, b:10.3}
-    ],
-    ncs: [
-      {code:"S 0500-N", name:"Neutral White", L:95.0, a:0.0, b:0.0},
-      {code:"S 9000-N", name:"Jet Black", L:10.0, a:0.0, b:0.0},
-      {code:"S 1080-Y90R", name:"Pure Red", L:48.0, a:58.0, b:42.0},
-      {code:"S 2060-R90B", name:"Deep Sky", L:42.0, a:-8.0, b:-46.0},
-      {code:"S 1515-Y20R", name:"Soft Sand", L:82.0, a:3.5, b:15.0},
-      {code:"S 2070-G10Y", name:"Fresh Green", L:62.0, a:-52.0, b:40.0},
-      {code:"S 4500-N", name:"Mid Grey", L:56.0, a:0.0, b:0.0}
-    ],
-    pantone: [
-      {code:"PANTONE 18-1662", name:"Flame Scarlet", L:47.2, a:61.2, b:40.5},
-      {code:"PANTONE 19-4052", name:"Classic Blue", L:30.5, a:2.8, b:-39.2},
-      {code:"PANTONE 17-5104", name:"Ultimate Gray", L:63.5, a:-1.2, b:1.5},
-      {code:"PANTONE 13-0647", name:"Illuminating", L:86.4, a:5.2, b:76.1},
-      {code:"PANTONE 19-0303", name:"Jet Black", L:12.4, a:0.2, b:-0.8},
-      {code:"PANTONE 11-0601", name:"Bright White", L:96.2, a:-0.5, b:1.2}
-    ]
-  };
-
-  function labToRgb(L, a, b) {
-    let y = (L + 16) / 116;
-    let x = a / 500 + y;
-    let z = y - b / 200;
-
-    const fn = (t) => t > 0.206893 ? Math.pow(t, 3) : (t - 16/116) / 7.787;
-    x = 0.95047 * fn(x);
-    y = 1.00000 * fn(y);
-    z = 1.08883 * fn(z);
-
-    let r = x *  3.2406 + y * -1.5372 + z * -0.4986;
-    let g = x * -0.9689 + y *  1.8758 + z *  0.0415;
-    let bl = x *  0.0557 + y * -0.2040 + z *  1.0570;
-
-    const gamma = (c) => c <= 0.0031308 ? 12.92 * c : 1.055 * Math.pow(c, 1/2.4) - 0.055;
-    r = Math.min(255, Math.max(0, Math.round(gamma(r) * 255)));
-    g = Math.min(255, Math.max(0, Math.round(gamma(g) * 255)));
-    bl = Math.min(255, Math.max(0, Math.round(gamma(bl) * 255)));
-
-    return [r, g, bl];
-  }
-
-  function rgbToHex(r, g, b) {
-    return "#" + [r, g, b].map(x => x.toString(16).padStart(2, '0')).join('');
-  }
-
-  function rgbToCmyk(r, g, b) {
-    let c = 1 - (r / 255);
-    let m = 1 - (g / 255);
-    let y = 1 - (b / 255);
-    let k = Math.min(c, Math.min(m, y));
-
-    if (k === 1) return {c: 0, m: 0, y: 0, k: 100};
-    c = Math.round(((c - k) / (1 - k)) * 100);
-    m = Math.round(((m - k) / (1 - k)) * 100);
-    y = Math.round(((y - k) / (1 - k)) * 100);
-    k = Math.round(k * 100);
-    return {c, m, y, k};
-  }
-
-  function labToLch(L, a, b) {
-    let C = Math.sqrt(a * a + b * b);
-    let h = Math.atan2(b, a) * (180 / Math.PI);
-    if (h < 0) h += 360;
-    return {L, C, h};
-  }
-
-  function deltaE00(L1, a1, b1, L2, a2, b2) {
-    const rad = Math.PI / 180;
-    let avgL = (L1 + L2) / 2;
-    let c1 = Math.sqrt(a1 * a1 + b1 * b1);
-    let c2 = Math.sqrt(a2 * a2 + b2 * b2);
-    let avgC = (c1 + c2) / 2;
-    let G = 0.5 * (1 - Math.sqrt(Math.pow(avgC, 7) / (Math.pow(avgC, 7) + 6103515625)));
-
-    let a1p = (1 + G) * a1;
-    let a2p = (1 + G) * a2;
-    let c1p = Math.sqrt(a1p * a1p + b1 * b1);
-    let c2p = Math.sqrt(a2p * a2p + b2 * b2);
-    let avgCp = (c1p + c2p) / 2;
-
-    let h1p = Math.atan2(b1, a1p) * (180 / Math.PI); if (h1p < 0) h1p += 360;
-    let h2p = Math.atan2(b2, a2p) * (180 / Math.PI); if (h2p < 0) h2p += 360;
-
-    let dhp = h2p - h1p;
-    if (Math.abs(dhp) > 180) dhp += (h2p <= h1p ? 360 : -360);
-    let dHp = 2 * Math.sqrt(c1p * c2p) * Math.sin((dhp / 2) * rad);
-
-    let avghp = Math.abs(h1p - h2p) > 180 ? (h1p + h2p + 360) / 2 : (h1p + h2p) / 2;
-    let T = 1 - 0.17 * Math.cos((avghp - 30) * rad) + 0.24 * Math.cos(2 * avghp * rad) +
-            0.32 * Math.cos((3 * avghp + 6) * rad) - 0.20 * Math.cos((4 * avghp - 63) * rad);
-
-    let dLp = L2 - L1;
-    let dCp = c2p - c1p;
-    let sL = 1 + (0.015 * Math.pow(avgL - 50, 2)) / Math.sqrt(20 + Math.pow(avgL - 50, 2));
-    let sC = 1 + 0.045 * avgCp;
-    let sH = 1 + 0.015 * avgCp * T;
-    let rT = -2 * Math.sqrt(Math.pow(avgCp, 7) / (Math.pow(avgCp, 7) + 6103515625)) *
-             Math.sin(60 * Math.exp(-Math.pow((avghp - 275) / 25, 2)) * rad);
-
-    return Math.sqrt(Math.pow(dLp / sL, 2) + Math.pow(dCp / sC, 2) + Math.pow(dHp / sH, 2) + rT * (dCp / sC) * (dHp / sH));
-  }
-
-  function setCatalog(catalogKey) {
-    currentCatalog = catalogKey;
-    document.querySelectorAll('.catalog-tab').forEach(tab => tab.classList.remove('active'));
-    event.target.classList.add('active');
-
-    if (lastMeasuredLab) {
-      updateCatalogSearch(lastMeasuredLab[0], lastMeasuredLab[1], lastMeasuredLab[2], lastMeasuredRefl);
-    }
-  }
-
-  // ==========================================================================
-  // ГИБРИДНЫЙ ДВИЖОК: CIEDE2000 + ФОРМА СПЕКТРА F2..F8
-  // ==========================================================================
-  function updateCatalogSearch(L, a, b, measuredRefl) {
-    const list = CATALOGS[currentCatalog];
-
-    // Исключаем зашумлённый F1, нормализуем вектор по 7 каналам F2..F8
-    let normMeasured = null;
-    if (measuredRefl && Array.isArray(measuredRefl) && measuredRefl.length >= 8) {
-      const cleanRefl = measuredRefl.slice(1);
-      const sum = cleanRefl.reduce((acc, v) => acc + v, 0) || 1.0;
-      normMeasured = cleanRefl.map(v => v / sum);
-    }
-
-    let ranked = list.map(item => {
-      const dE = deltaE00(L, a, b, item.L, item.a, item.b);
-      let spectralDistance = 0.0;
-      let hasFingerprint = false;
-
-      // Очищаем код от букв ("RAL 1021" -> "1021")
-      const pureCode = item.code.replace(/[^\d]/g, '');
-      const refFingerprint = RAL_SPECTRAL_FINGERPRINTS[pureCode];
-
-      if (refFingerprint && normMeasured) {
-        hasFingerprint = true;
-        const refSum = refFingerprint.reduce((acc, v) => acc + v, 0) || 1.0;
-        const normRef = refFingerprint.map(v => v / refSum);
-
-        const sumSquares = normMeasured.reduce((acc, val, idx) => {
-          return acc + Math.pow(val - normRef[idx], 2);
-        }, 0);
-        spectralDistance = Math.sqrt(sumSquares);
-      } else {
-        spectralDistance = dE / 20.0;
-      }
-
-      // Приоритет спектрального отпечатка при спорных колориметрических сдвигах
-      const combinedScore = hasFingerprint
-        ? (dE * 0.25) + (spectralDistance * 150.0 * 0.75)
-        : dE;
-
-      return {
-        ...item,
-        dE: dE,
-        spectralDistance: spectralDistance,
-        combinedScore: combinedScore
-      };
-    }).sort((x, y) => x.combinedScore - y.combinedScore);
-
-    const top1 = ranked[0];
-    const top2 = ranked[1];
-    const top3 = ranked[2];
-
-    document.getElementById('mainColorCode').innerText = top1.code;
-    document.getElementById('mainColorName').innerText = top1.name;
-    document.getElementById('deltaText').innerHTML = `${top1.dE.toFixed(2)} <span style="font-size:0.8rem; font-weight:normal; color:var(--text-dim);">ΔE</span>`;
-
-    const pill = document.getElementById('qualityPill');
-    if (top1.dE < 3.0 || top1.spectralDistance < 0.08) {
-      pill.innerText = "ИДЕАЛЬНОЕ СОВПАДЕНИЕ"; pill.style.color = "#4ade80";
-    } else if (top1.dE < 6.0 || top1.spectralDistance < 0.15) {
-      pill.innerText = "ХОРОШЕЕ ПОПАДАНИЕ"; pill.style.color = "#facc15";
-    } else {
-      pill.innerText = "ПРИБЛИЗИТЕЛЬНЫЙ ОТТЕНОК"; pill.style.color = "#f87171";
-    }
-
-    if (top2) {
-      document.getElementById('alt1Code').innerText = `${top2.code} (${top2.name})`;
-      document.getElementById('alt1De').innerText = `ΔE ${top2.dE.toFixed(1)}`;
-      let [r2, g2, b2] = labToRgb(top2.L, top2.a, top2.b);
-      document.getElementById('alt1Swatch').style.backgroundColor = `rgb(${r2},${g2},${b2})`;
-    }
-    if (top3) {
-      document.getElementById('alt2Code').innerText = `${top3.code} (${top3.name})`;
-      document.getElementById('alt2De').innerText = `ΔE ${top3.dE.toFixed(1)}`;
-      let [r3, g3, b3] = labToRgb(top3.L, top3.a, top3.b);
-      document.getElementById('alt2Swatch').style.backgroundColor = `rgb(${r3},${g3},${b3})`;
-    }
-
-    lastReportData = {
-      code: top1.code,
-      name: top1.name,
-      dE: top1.dE.toFixed(2),
-      catalog: currentCatalog.toUpperCase()
+  <script>
+    // ========================================================================
+    // КАТАЛОГ ЦВЕТОВ RAL CLASSIC (L*a*b*)
+    // ========================================================================
+    const CATALOGS = {
+      ral_classic: [
+        { code: "RAL 1000", name: "Green beige", L: 76.5, a: 2.1, b: 24.3 },
+        { code: "RAL 1001", name: "Beige", L: 74.0, a: 5.5, b: 23.5 },
+        { code: "RAL 1002", name: "Sand yellow", L: 74.2, a: 6.8, b: 34.0 },
+        { code: "RAL 1003", name: "Signal yellow", L: 78.5, a: 16.5, b: 79.5 },
+        { code: "RAL 1017", name: "Saffron yellow", L: 76.8, a: 20.5, b: 58.2 },
+        { code: "RAL 1018", name: "Zinc yellow", L: 82.5, a: 4.8, b: 72.5 },
+        { code: "RAL 1019", name: "Grey beige", L: 62.5, a: 3.5, b: 14.2 },
+        { code: "RAL 1020", name: "Olive yellow", L: 61.5, a: 2.5, b: 26.5 },
+        { code: "RAL 1021", name: "Rape yellow", L: 81.7, a: 10.3, b: 78.6 },
+        { code: "RAL 1028", name: "Melon yellow", L: 75.8, a: 28.5, b: 76.2 },
+        { code: "RAL 2004", name: "Pure orange", L: 58.5, a: 55.2, b: 62.5 },
+        { code: "RAL 2005", name: "Luminous orange", L: 63.2, a: 68.5, b: 67.2 },
+        { code: "RAL 3000", name: "Flame red", L: 44.5, a: 52.8, b: 32.5 },
+        { code: "RAL 3016", name: "Coral red", L: 48.2, a: 46.5, b: 28.5 },
+        { code: "RAL 3018", name: "Strawberry red", L: 52.5, a: 50.2, b: 23.5 },
+        { code: "RAL 3020", name: "Traffic red", L: 46.9, a: 59.8, b: 44.5 },
+        { code: "RAL 3024", name: "Luminous red", L: 56.5, a: 74.5, b: 52.5 },
+        { code: "RAL 3026", name: "Luminous bright red", L: 58.2, a: 75.8, b: 49.5 },
+        { code: "RAL 4003", name: "Heather violet", L: 54.5, a: 42.5, b: -3.5 },
+        { code: "RAL 5002", name: "Ultramarine blue", L: 31.5, a: 9.5, b: -45.5 },
+        { code: "RAL 7035", name: "Light grey", L: 82.5, a: -1.2, b: 2.5 },
+        { code: "RAL 9003", name: "Signal white", L: 95.5, a: -0.8, b: 2.8 },
+        { code: "RAL 9005", name: "Jet black", L: 26.5, a: 0.1, b: -0.5 }
+      ]
     };
-  }
 
-  function handleTelemetry(event) {
-    const raw = new TextDecoder().decode(event.target.value);
-    try {
-      const data = JSON.parse(raw);
-      if (!data.lab) return;
+    let currentCatalog = "ral_classic";
 
-      const [L, a, b] = data.lab;
-      lastMeasuredLab = [L, a, b];
-      lastMeasuredRefl = data.refl || null;
+    // Спектральные эталоны (каналы F2..F8)
+    const RAL_SPECTRAL_FINGERPRINTS = {
+      "1021": [0.156, 0.273, 0.443, 0.803, 0.879, 0.876, 0.879],
+      "1017": [0.180, 0.280, 0.220, 0.580, 0.780, 0.810, 0.830],
+      "3020": [0.044, 0.076, 0.033, 0.225, 0.394, 0.659, 0.688],
+      "3018": [0.100, 0.140, 0.120, 0.280, 0.460, 0.650, 0.750],
+      "3024": [0.030, 0.050, 0.020, 0.310, 0.520, 0.820, 0.890],
+      "9003": [1.000, 1.000, 1.000, 1.000, 1.000, 1.000, 1.000],
+      "9005": [0.011, 0.012, 0.011, 0.010, 0.010, 0.010, 0.007]
+    };
 
-      const [r, g, bl] = labToRgb(L, a, b);
-      const hex = rgbToHex(r, g, bl);
-      const cmyk = rgbToCmyk(r, g, bl);
-      const lch = labToLch(L, a, b);
+    // ========================================================================
+    // CIEDE2000 МАТЕМАТИКА
+    // ========================================================================
+    function deltaE00(l1, a1, b1, l2, a2, b2) {
+      const deg2rad = Math.PI / 180;
+      const rad2deg = 180 / Math.PI;
 
-      const swatch = document.getElementById('dominantSwatch');
-      swatch.style.backgroundColor = hex;
-      document.getElementById('hexVal').innerText = hex.toUpperCase();
+      const avgLp = (l1 + l2) / 2;
+      const c1 = Math.sqrt(a1 * a1 + b1 * b1);
+      const c2 = Math.sqrt(a2 * a2 + b2 * b2);
+      const avgC = (c1 + c2) / 2;
 
-      const textColor = L > 65 ? '#07090e' : '#ffffff';
-      document.getElementById('mainColorCode').style.color = textColor;
-      document.getElementById('mainColorName').style.color = textColor;
+      const G = 0.5 * (1 - Math.sqrt(Math.pow(avgC, 7) / (Math.pow(avgC, 7) + Math.pow(25, 7))));
+      const a1p = (1 + G) * a1;
+      const a2p = (1 + G) * a2;
 
-      document.getElementById('labText').innerText = `${L.toFixed(1)} ${a.toFixed(1)} ${b.toFixed(1)}`;
-      document.getElementById('rgbText').innerText = `${r} ${g} ${bl}`;
-      document.getElementById('lchText').innerText = `${lch.L.toFixed(0)} / ${lch.C.toFixed(0)} / ${lch.h.toFixed(0)}°`;
+      const c1p = Math.sqrt(a1p * a1p + b1 * b1);
+      const c2p = Math.sqrt(a2p * a2p + b2 * b2);
+      const avgCp = (c1p + c2p) / 2;
 
-      document.getElementById('cmykText').innerText = `C:${cmyk.c}% M:${cmyk.m}% Y:${cmyk.y}% K:${cmyk.k}%`;
-      document.getElementById('barC').style.width = cmyk.c + '%';
-      document.getElementById('barM').style.width = cmyk.m + '%';
-      document.getElementById('barY').style.width = cmyk.y + '%';
-      document.getElementById('barK').style.width = cmyk.k + '%';
+      let h1p = Math.atan2(b1, a1p) * rad2deg;
+      if (h1p < 0) h1p += 360;
+      let h2p = Math.atan2(b2, a2p) * rad2deg;
+      if (h2p < 0) h2p += 360;
 
-      updateCatalogSearch(L, a, b, lastMeasuredRefl);
+      let avghp = Math.abs(h1p - h2p) > 180 ? (h1p + h2p + 360) / 2 : (h1p + h2p) / 2;
+      const T = 1 - 0.17 * Math.cos((avghp - 30) * deg2rad)
+                  + 0.24 * Math.cos((2 * avghp) * deg2rad)
+                  + 0.32 * Math.cos((3 * avghp + 6) * deg2rad)
+                  - 0.20 * Math.cos((4 * avghp - 63) * deg2rad);
 
-    } catch (e) {
-      console.warn("JSON Error:", e);
+      let deltahp = h2p - h1p;
+      if (Math.abs(deltahp) > 180) {
+        deltahp = h2p <= h1p ? deltahp + 360 : deltahp - 360;
+      }
+      const deltaLp = l2 - l1;
+      const deltaCp = c2p - c1p;
+      const deltaHp = 2 * Math.sqrt(c1p * c2p) * Math.sin((deltahp / 2) * deg2rad);
+
+      const Sl = 1 + (0.015 * Math.pow(avgLp - 50, 2)) / Math.sqrt(20 + Math.pow(avgLp - 50, 2));
+      const Sc = 1 + 0.045 * avgCp;
+      const Sh = 1 + 0.015 * avgCp * T;
+
+      const deltaTheta = 30 * Math.exp(-Math.pow((avghp - 275) / 25, 2));
+      const Rc = 2 * Math.sqrt(Math.pow(avgCp, 7) / (Math.pow(avgCp, 7) + Math.pow(25, 7)));
+      const Rt = -Math.sin(2 * deltaTheta * deg2rad) * Rc;
+
+      return Math.sqrt(
+        Math.pow(deltaLp / Sl, 2) +
+        Math.pow(deltaCp / Sc, 2) +
+        Math.pow(deltaHp / Sh, 2) +
+        Rt * (deltaCp / Sc) * (deltaHp / Sh)
+      );
     }
-  }
 
-  async function triggerRemoteScan() {
-    if (!rxChar) {
-      alert("Прибор не подключен!");
-      return;
+    function labToRgb(l, a, b) {
+      let y = (l + 16) / 116;
+      let x = a / 500 + y;
+      let z = y - b / 200;
+
+      const fn = t => (t > 0.206897 ? Math.pow(t, 3) : (t - 16 / 116) / 7.787);
+      x = 0.95047 * fn(x);
+      y = 1.00000 * fn(y);
+      z = 1.08883 * fn(z);
+
+      let r = x * 3.2406 + y * -1.5372 + z * -0.4986;
+      let g = x * -0.9689 + y * 1.8758 + z * 0.0415;
+      let bl = x * 0.0557 + y * -0.2040 + z * 1.0570;
+
+      const adj = c => (c > 0.0031308 ? 1.055 * Math.pow(c, 1 / 2.4) - 0.055 : 12.92 * c);
+      return [
+        Math.min(255, Math.max(0, Math.round(adj(r) * 255))),
+        Math.min(255, Math.max(0, Math.round(adj(g) * 255))),
+        Math.min(255, Math.max(0, Math.round(adj(bl) * 255)))
+      ];
     }
-    try {
+
+    // ========================================================================
+    // ОБРАБОТКА ДАННЫХ И ПОИСК В КАТАЛОГЕ
+    // ========================================================================
+    let lastReportData = null;
+
+    function updateCatalogSearch(L, a, b, measuredRefl) {
+      const list = CATALOGS[currentCatalog];
+
+      let normMeasured = null;
+      if (measuredRefl && Array.isArray(measuredRefl) && measuredRefl.length >= 8) {
+        const cleanRefl = measuredRefl.slice(1);
+        const sum = cleanRefl.reduce((acc, v) => acc + v, 0) || 1.0;
+        normMeasured = cleanRefl.map(v => v / sum);
+      }
+
+      let ranked = list.map(item => {
+        const dE = deltaE00(L, a, b, item.L, item.a, item.b);
+        let spectralDistance = 0.0;
+        let hasFingerprint = false;
+
+        const pureCode = item.code.replace(/[^\d]/g, '');
+        const refFingerprint = RAL_SPECTRAL_FINGERPRINTS[pureCode];
+
+        if (refFingerprint && normMeasured) {
+          hasFingerprint = true;
+          const refSum = refFingerprint.reduce((acc, v) => acc + v, 0) || 1.0;
+          const normRef = refFingerprint.map(v => v / refSum);
+
+          const sumSquares = normMeasured.reduce((acc, val, idx) => {
+            return acc + Math.pow(val - normRef[idx], 2);
+          }, 0);
+          spectralDistance = Math.sqrt(sumSquares);
+        }
+
+        let combinedScore = dE;
+        if (hasFingerprint) {
+          combinedScore = dE * 0.7 + (spectralDistance * 30.0) * 0.3;
+        }
+
+        return {
+          ...item,
+          dE: dE,
+          spectralDistance: spectralDistance,
+          combinedScore: combinedScore
+        };
+      }).sort((x, y) => x.combinedScore - y.combinedScore);
+
+      const top1 = ranked[0];
+      const top2 = ranked[1];
+      const top3 = ranked[2];
+
+      document.getElementById('mainColorCode').innerText = top1.code;
+      document.getElementById('mainColorName').innerText = top1.name;
+      document.getElementById('deltaText').innerHTML = `${top1.dE.toFixed(2)} <span style="font-size:0.8rem; font-weight:normal; color:var(--text-dim);">ΔE</span>`;
+
+      const pill = document.getElementById('qualityPill');
+      if (top1.dE < 3.0) {
+        pill.innerText = "ИДЕАЛЬНОЕ СОВПАДЕНИЕ"; pill.style.color = "var(--success)";
+      } else if (top1.dE < 6.0) {
+        pill.innerText = "ХОРОШЕЕ ПОПАДАНИЕ"; pill.style.color = "var(--warning)";
+      } else {
+        pill.innerText = "ПРИБЛИЗИТЕЛЬНЫЙ ОТТЕНОК"; pill.style.color = "var(--danger)";
+      }
+
+      let [r1, g1, b1] = labToRgb(top1.L, top1.a, top1.b);
+      document.getElementById('mainSwatch').style.backgroundColor = `rgb(${r1},${g1},${b1})`;
+
+      if (top2) {
+        document.getElementById('alt1Code').innerText = `${top2.code} (${top2.name})`;
+        document.getElementById('alt1De').innerText = `ΔE ${top2.dE.toFixed(1)}`;
+        let [r2, g2, b2] = labToRgb(top2.L, top2.a, top2.b);
+        document.getElementById('alt1Swatch').style.backgroundColor = `rgb(${r2},${g2},${b2})`;
+      }
+      if (top3) {
+        document.getElementById('alt2Code').innerText = `${top3.code} (${top3.name})`;
+        document.getElementById('alt2De').innerText = `ΔE ${top3.dE.toFixed(1)}`;
+        let [r3, g3, b3] = labToRgb(top3.L, top3.a, top3.b);
+        document.getElementById('alt2Swatch').style.backgroundColor = `rgb(${r3},${g3},${b3})`;
+      }
+
+      lastReportData = {
+        code: top1.code,
+        name: top1.name,
+        dE: top1.dE.toFixed(2),
+        catalog: currentCatalog.toUpperCase()
+      };
+    }
+
+    // ========================================================================
+    // BLE УПРАВЛЕНИЕ
+    // ========================================================================
+    const SERVICE_UUID = "6e400001-b5a3-f393-e0a9-e50e24dcca9e";
+    const CHAR_RX_UUID = "6e400002-b5a3-f393-e0a9-e50e24dcca9e";
+    const CHAR_TX_UUID = "6e400003-b5a3-f393-e0a9-e50e24dcca9e";
+
+    let bleDevice = null;
+    let rxChar = null;
+
+    async function toggleConnect() {
+      if (bleDevice && bleDevice.gatt.connected) {
+        bleDevice.gatt.disconnect();
+        return;
+      }
+
+      try {
+        document.getElementById('bleStatus').innerText = "Поиск прибора...";
+        bleDevice = await navigator.bluetooth.requestDevice({
+          filters: [{ name: "RAL-Scanner-PRO" }],
+          optionalServices: [SERVICE_UUID]
+        });
+
+        bleDevice.addEventListener('gattserverdisconnected', () => {
+          document.getElementById('bleStatus').innerText = "Статус: Отключено";
+          document.getElementById('btnConnect').innerText = "Подключить";
+          document.getElementById('btnConnect').classList.remove('btn-outline');
+        });
+
+        const server = await bleDevice.gatt.connect();
+        const service = await server.getPrimaryService(SERVICE_UUID);
+
+        rxChar = await service.getCharacteristic(CHAR_RX_UUID);
+        const txChar = await service.getCharacteristic(CHAR_TX_UUID);
+
+        await txChar.startNotifications();
+        txChar.addEventListener('characteristicvaluechanged', handleBleData);
+
+        document.getElementById('bleStatus').innerText = "Статус: Подключено (BLE)";
+        document.getElementById('btnConnect').innerText = "Отключить";
+        document.getElementById('btnConnect').classList.add('btn-outline');
+      } catch (err) {
+        console.error(err);
+        document.getElementById('bleStatus').innerText = "Ошибка подключения";
+      }
+    }
+
+    function handleBleData(event) {
+      const decoder = new TextDecoder('utf-8');
+      const jsonStr = decoder.decode(event.target.value);
+      try {
+        const data = JSON.parse(jsonStr);
+        if (data.lab && data.lab.length === 3) {
+          const [L, a, b] = data.lab;
+          document.getElementById('valL').innerText = L.toFixed(1);
+          document.getElementById('valA').innerText = a.toFixed(1);
+          document.getElementById('valB').innerText = b.toFixed(1);
+          updateCatalogSearch(L, a, b, data.refl);
+        }
+      } catch (e) {
+        console.error("JSON parse error:", e);
+      }
+    }
+
+    async function sendScanCmd() {
+      if (!rxChar) {
+        alert("Прибор не подключен по BLE");
+        return;
+      }
       const encoder = new TextEncoder();
-      await rxChar.writeValue(encoder.encode("SCAN"));
-      document.getElementById('qualityPill').innerText = "ИЗМЕРЕНИЕ...";
-      document.getElementById('qualityPill').style.color = "#60a5fa";
-    } catch (err) {
-      console.error("Ошибка отправки команды замера:", err);
-    }
-  }
-
-  function exportToPDF() {
-    if (!lastMeasuredLab || !lastReportData) {
-      alert("Сначала выполните замер цвета!");
-      return;
+      await rxChar.writeValue(encoder.encode("SCAN\n"));
     }
 
-    const { jsPDF } = window.jspdf;
-    const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
-
-    const [L, a, b] = lastMeasuredLab;
-    const [r, g, bl] = labToRgb(L, a, b);
-    const hex = rgbToHex(r, g, bl).toUpperCase();
-    const cmyk = rgbToCmyk(r, g, bl);
-    const lch = labToLch(L, a, b);
-
-    doc.setFillColor(15, 23, 42);
-    doc.rect(0, 0, 210, 40, 'F');
-    doc.setTextColor(255, 255, 255);
-    doc.setFont("helvetica", "bold");
-    doc.setFontSize(22);
-    doc.text("COLOR MEASUREMENT PASSPORT", 20, 22);
-    doc.setFontSize(10);
-    doc.setFont("helvetica", "normal");
-    doc.setTextColor(148, 163, 184);
-    doc.text(`Generated: ${new Date().toLocaleString()} | Instrument: RAL-Scanner-PRO`, 20, 32);
-
-    doc.setFillColor(r, g, bl);
-    doc.roundedRect(20, 50, 170, 45, 4, 4, 'F');
-    doc.setDrawColor(200, 200, 200);
-    doc.roundedRect(20, 50, 170, 45, 4, 4, 'D');
-
-    doc.setTextColor(L > 65 ? 15 : 255, L > 65 ? 23 : 255, L > 65 ? 42 : 255);
-    doc.setFont("helvetica", "bold");
-    doc.setFontSize(26);
-    doc.text(lastReportData.code, 28, 75);
-    doc.setFontSize(14);
-    doc.setFont("helvetica", "normal");
-    doc.text(lastReportData.name, 28, 85);
-
-    doc.setTextColor(15, 23, 42);
-    doc.setFontSize(14);
-    doc.setFont("helvetica", "bold");
-    doc.text("Chromatic Coordinates", 20, 110);
-    doc.setDrawColor(226, 232, 240);
-    doc.line(20, 114, 190, 114);
-
-    const rows = [
-      ["Color System Catalog:", `${lastReportData.catalog}`],
-      ["Color Difference (Delta E00):", `${lastReportData.dE}`],
-      ["CIE L*a*b*:", `${L.toFixed(2)},  ${a.toFixed(2)},  ${b.toFixed(2)}`],
-      ["CIE L*C*h:", `${lch.L.toFixed(1)},  ${lch.C.toFixed(1)},  ${lch.h.toFixed(1)} deg`],
-      ["HEX / HTML:", `${hex}`],
-      ["sRGB (D65):", `R:${r},  G:${g},  B:${bl}`],
-      ["CMYK (Print Approximation):", `C:${cmyk.c}%, M:${cmyk.m}%, Y:${cmyk.y}%`]
-    ];
-
-    let y = 125;
-    rows.forEach(([label, value]) => {
-      doc.setFont("helvetica", "bold");
-      doc.text(label, 20, y);
-      doc.setFont("helvetica", "normal");
-      doc.text(value, 95, y);
-      y += 10;
-    });
-
-    doc.setFontSize(9);
-    doc.setTextColor(148, 163, 184);
-    doc.text("Certified standard: CIE D65 / 10 deg Observer. Calculation model: CIEDE2000.", 20, 280);
-
-    doc.save(`Color_Report_${lastReportData.code.replace(/\s+/g, '_')}.pdf`);
-  }
-
-  function copyReport() {
-    if (!lastMeasuredLab || !lastReportData) {
-      alert("Сначала выполните измерение!");
-      return;
+    function exportData() {
+      if (!lastReportData) {
+        alert("Нет данных для экспорта");
+        return;
+      }
+      const text = `Замер Color Station PRO\nАртикул: ${lastReportData.code} (${lastReportData.name})\nДельта: ΔE ${lastReportData.dE}\nКаталог: ${lastReportData.catalog}`;
+      navigator.clipboard.writeText(text).then(() => alert("Данные скопированы в буфер обмена!"));
     }
-    const [L, a, b] = lastMeasuredLab;
-    const [r, g, bl] = labToRgb(L, a, b);
-    const hex = rgbToHex(r, g, bl).toUpperCase();
-    const cmyk = rgbToCmyk(r, g, bl);
-
-    const report = 
-`--- COLOR SCAN REPORT ---
-Эталон: ${lastReportData.code} (${lastReportData.name})
-Каталог: ${lastReportData.catalog} | ΔE00: ${lastReportData.dE}
-CIE L*a*b*: ${L.toFixed(2)}, ${a.toFixed(2)}, ${b.toFixed(2)}
-HEX: ${hex}
-sRGB: ${r}, ${g}, ${bl}
-CMYK: C:${cmyk.c}% M:${cmyk.m}% Y:${cmyk.y}% K:${cmyk.k}%
--------------------------`;
-
-    navigator.clipboard.writeText(report).then(() => {
-      const btn = document.getElementById('btnCopy');
-      btn.innerText = "Скопировано!";
-      setTimeout(() => btn.innerText = "Текст", 2000);
-    });
-  }
-
-  async function handlePowerToggle() {
-    const sw = document.getElementById('powerBtn');
-    const label = document.getElementById('switchStatus');
-    sw.classList.add('connecting');
-    label.innerText = "Поиск прибора...";
-
-    try {
-      bleDevice = await navigator.bluetooth.requestDevice({
-        filters: [{ name: "RAL-Scanner-PRO" }],
-        optionalServices: [SERVICE_UUID]
-      });
-
-      bleDevice.addEventListener('gattserverdisconnected', onDisconnected);
-      label.innerText = "Подключение...";
-
-      const server = await bleDevice.gatt.connect();
-      const service = await server.getPrimaryService(SERVICE_UUID);
-
-      pTxChar = await service.getCharacteristic(CHAR_TX_UUID);
-      rxChar = await service.getCharacteristic(CHAR_RX_UUID);
-
-      await pTxChar.startNotifications();
-      pTxChar.addEventListener('characteristicvaluechanged', handleTelemetry);
-
-      document.getElementById('connectScreen').style.display = 'none';
-      document.getElementById('dashboardScreen').style.display = 'flex';
-
-    } catch (err) {
-      sw.classList.remove('connecting');
-      label.innerText = "Включить прибор";
-      console.log("Connect failed", err);
-    }
-  }
-
-  function disconnectDevice() {
-    if (bleDevice && bleDevice.gatt.connected) bleDevice.gatt.disconnect();
-  }
-
-  function onDisconnected() {
-    document.getElementById('dashboardScreen').style.display = 'none';
-    document.getElementById('connectScreen').style.display = 'flex';
-    document.getElementById('powerBtn').classList.remove('connecting');
-    document.getElementById('switchStatus').innerText = "Включить прибор";
-    rxChar = null;
-  }
-</script>
-
+  </script>
 </body>
 </html>
